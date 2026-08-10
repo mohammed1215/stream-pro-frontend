@@ -1,0 +1,169 @@
+@import "tailwindcss";
+@plugin '@vidstack/react/tailwind.cjs';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent-ui);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-accent-bg: var(--accent-bg);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+:root {
+  /* استخدام Slate عشان ألوان نظيفة، حادة، ومبتهاش */
+  --background: #ffffff;
+  --foreground: #0f172a; /* Slate 900 - أسود غامق ومريح ومليش تدرج موف */
+
+  --border: #e2e8f0; /* Slate 200 - بوردر واضح ونظيف */
+  --input: #e2e8f0;
+  --ring: #0ea5e9;
+
+  --primary: #2563eb; /* Sky 600 - أغمق وأقوى شوية من 500 عشان ميبهتش */
+  --primary-foreground: #ffffff;
+
+  --secondary: #8b5cf6; /* Slate 50 - أنضف من البيج */
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9; /* Slate 100 */
+  --muted-foreground: #64748b; /* Slate 500 - رمادي مقروء جداً ومبهوش */
+
+  --accent-ui: #38bdf8; /* Sky 100 - لمسة زرقاء خفيفة جداً للـ accent */
+  --accent-foreground: #0c4a6e;
+
+  --destructive: #ef4444;
+  --radius: 0.75rem; /* زدناها لـ 12px عشان الـ rounded تبان أحلى */
+
+  /* باقي متغيراتك */
+  --text: #64748b;
+  --text-h: #0f172a;
+  --bg: #ffffff;
+  --code-bg: #f1f5f9;
+  --accent: #0ea5e9;
+  --accent-bg: rgba(14, 165, 233, 0.1);
+  --accent-border: rgba(14, 165, 233, 0.3);
+  --social-bg: rgba(241, 245, 249, 0.8);
+
+  /* ظل أنعم وأحدث (Modern Soft Shadow) */
+  --shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05),
+    0 4px 6px -2px rgba(15, 23, 42, 0.03);
+
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  /* تعديل الخط عشان يكون أدق وأقل ضبابية */
+  font: 16px/1.5 var(--sans);
+  letter-spacing: -0.011em;
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dark {
+  --background: #020617; /* Slate 950 - أسود غني جداً */
+  --foreground: #f8fafc;
+
+  --border: #1e293b; /* Slate 800 */
+  --input: #1e293b;
+  --ring: #38bdf8; /* Sky 400 */
+
+  --primary: #0ea5e9; /* Sky 500 */
+  --primary-foreground: #ffffff;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8; /* Slate 400 */
+
+  --accent-ui: #0c4a6e;
+  --accent-foreground: #e0f2fe;
+
+  --destructive: #f87171;
+
+  --text: #94a3b8;
+  --text-h: #f8fafc;
+  --bg: #020617;
+  --border: #1e293b;
+  --code-bg: #0f172a;
+  --accent: #38bdf8;
+  --accent-bg: rgba(56, 189, 248, 0.15);
+  --accent-border: rgba(56, 189, 248, 0.4);
+  --social-bg: rgba(15, 23, 42, 0.8);
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 4px 6px -2px rgba(0, 0, 0, 0.2);
+
+  color-scheme: dark;
+}
+
+.dark #social .button-icon {
+  filter: invert(1) brightness(2);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+  }
+
+  * {
+    @apply border-border;
+  }
+}
+
+.animate-page {
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+button {
+  cursor: pointer;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-pop-up {
+  opacity: 1;
+  transform: translateY(0) translateX(0) scale(1);
+  transition: all 0.2s;
+  @starting-style {
+    opacity: 0;
+    transform: translateX(6px) translateY(6px) scale(0.97);
+  }
+}
