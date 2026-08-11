@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect, useRef, useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Bell,
   CheckCheck,
@@ -20,19 +20,14 @@ import type {
   NotificationType,
 } from "../lib/notifications"
 import {
+  fetchNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
 } from "../lib/notifications"
+import { useAuth } from "../features/Auth/hooks/useAuth"
 
 type NotificationDropDownProps = {
-  isPending: boolean
-  notifications?: NotificationResponse[]
-  currentPage: number
-  totalPages?: number
-  hasNextPage?: boolean
   onClose?: () => void
-  onNotificationClick?: (notification: NotificationResponse) => void
-  onPageChange?: (page: number) => void
 }
 
 function getNotificationMeta(type: NotificationType) {
@@ -131,32 +126,28 @@ function EmptyNotifications() {
 }
 
 export const NotificationDropDown = ({
-  isPending,
-  notifications,
-  currentPage,
-  totalPages,
-  hasNextPage,
   onClose,
-  onNotificationClick,
-  onPageChange,
 }: NotificationDropDownProps) => {
+  const { user } = useAuth()
   const queryClient = useQueryClient()
   const listRef = useRef<HTMLUListElement>(null)
+
+  const pageSize = 5
+  const [pageNumber, setPageNumber] = useState(1)
+
+  const { data: notifications, isPending } = useQuery({
+    queryKey: ["notifications", user?.id, pageNumber],
+    queryFn: () => fetchNotifications(pageNumber, pageSize),
+  })
 
   // Smoothly scroll to top when page changes
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTo({ top: 0, behavior: "smooth" })
     }
-  }, [currentPage])
+  }, [pageNumber])
 
-  const unreadCount = useMemo(
-    () =>
-      notifications?.filter((notification) => !notification.isRead).length ?? 0,
-    [notifications]
-  )
-
-  const hasNotifications = Boolean(notifications?.length)
+  const hasNotifications = Boolean(notifications?.items.length)
 
   const {
     mutate: markAsRead,
@@ -183,8 +174,7 @@ export const NotificationDropDown = ({
     if (!notification.isRead) {
       markAsRead(notification.notificationId)
     }
-    onNotificationClick?.(notification)
-    onClose?.()
+    markAsRead(notification.notificationId)
   }
 
   return (
@@ -203,12 +193,12 @@ export const NotificationDropDown = ({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold">Notifications</h2>
-        {unreadCount > 0 && (
+        {notifications && notifications.unreadTotal > 0 && (
           <span
             className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
             aria-live="polite"
           >
-            {unreadCount} unread
+            {notifications.unreadTotal} unread
           </span>
         )}
       </div>
@@ -221,8 +211,8 @@ export const NotificationDropDown = ({
       >
         {isPending ? (
           <NotificationSkeleton />
-        ) : notifications && notifications.length > 0 ? (
-          notifications.map((notification) => {
+        ) : notifications && notifications.items.length > 0 ? (
+          notifications?.items.map((notification) => {
             const { Icon, className, label } = getNotificationMeta(
               notification.type
             )
@@ -302,7 +292,11 @@ export const NotificationDropDown = ({
               size="sm"
               className="w-full gap-2"
               onClick={() => markAllAsRead()}
-              disabled={isPending || unreadCount === 0 || isMarkingAllAsRead}
+              disabled={
+                isPending ||
+                notifications?.unreadTotal === 0 ||
+                isMarkingAllAsRead
+              }
             >
               {isMarkingAllAsRead ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -320,8 +314,8 @@ export const NotificationDropDown = ({
             variant="ghost"
             size="sm"
             className="h-8 gap-1"
-            disabled={isPending || currentPage === 1}
-            onClick={() => onPageChange?.(Math.max(1, currentPage - 1))}
+            disabled={isPending || pageNumber === 1}
+            onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
             aria-label="Previous page"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -329,16 +323,16 @@ export const NotificationDropDown = ({
           </Button>
 
           <span className="text-xs font-medium text-muted-foreground">
-            Page {currentPage}
-            {totalPages ? ` of ${totalPages}` : ""}
+            Page {pageNumber}
+            {notifications?.totalPages ? ` of ${notifications.totalPages}` : ""}
           </span>
 
           <Button
             variant="ghost"
             size="sm"
             className="h-8 gap-1"
-            disabled={isPending || !hasNextPage}
-            onClick={() => onPageChange?.(currentPage + 1)}
+            disabled={isPending || !notifications?.hasNextPage}
+            onClick={() => setPageNumber(pageNumber + 1)}
             aria-label="Next page"
           >
             <span className="hidden sm:inline">Next</span>

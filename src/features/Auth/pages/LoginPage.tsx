@@ -12,13 +12,17 @@ import {
 } from "../../../lib/auth"
 import { AxiosError } from "axios"
 import { useAuth } from "../hooks/useAuth"
+import { getFcmToken } from "../../../config/firebase"
+import { getDeviceId } from "../../../lib/helpers"
 
-export const LoginPage = () => {
+const LoginForm = () => {
   const { login } = useAuth()
+
   const [formData, setFormData] = useState<LoginPayload>({
     email: "",
     password: "",
   })
+
   const [errors, setErrors] = useState({
     email: "",
     password: "",
@@ -57,8 +61,22 @@ export const LoginPage = () => {
     setErrors((prev) => ({ ...prev, [name]: "" }))
   }
 
-  const handleSubmit = (e: React.SubmitEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault()
+
+    // request notification permission and get FCM token
+    let fcmToken: string | null = null
+    if ("Notification" in window) {
+      const permission = await Notification.requestPermission()
+      if (permission === "granted") {
+        console.log("Notification permission granted.")
+        fcmToken = await getFcmToken()
+      } else {
+        alert(
+          "Notification permission denied. You won't receive notifications."
+        )
+      }
+    }
     // Handle form submission logic here
     if (!formData.email || !formData.password) {
       setErrors({
@@ -67,9 +85,39 @@ export const LoginPage = () => {
         global: "",
       })
     }
-    loginMutation.mutate(formData)
+    loginMutation.mutate({
+      ...formData,
+      deviceType: "WEB",
+      deviceId: getDeviceId(),
+      deviceToken: fcmToken ?? undefined,
+    })
   }
 
+  return (
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      {errors.global && (
+        <p className="text-red-500 text-sm text-center">{errors.global}</p>
+      )}
+      {/* Email and Password Inputs */}
+      <EmailInput
+        name="email"
+        value={formData.email}
+        onChange={handleChange}
+        message={errors.email}
+      />
+      <PasswordInput
+        name="password"
+        value={formData.password}
+        onChange={handleChange}
+        message={errors.password}
+      />
+      {/* Submit Button */}
+      <SubmitButton>Sign In</SubmitButton>
+    </form>
+  )
+}
+
+export const LoginPage = () => {
   return (
     <div className="flex h-screen w-full items-center justify-center  animate-page px-3">
       <div className="flex w-full max-w-lg flex-col gap-4 shadow-lg rounded-lg border border-border bg-background p-6">
@@ -86,27 +134,7 @@ export const LoginPage = () => {
         <p className="text-center text-foreground">
           Sign in to Creator Studio to continue.
         </p>
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          {errors.global && (
-            <p className="text-red-500 text-sm text-center">{errors.global}</p>
-          )}
-          {/* Email and Password Inputs */}
-          <EmailInput
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            message={errors.email}
-          />
-          <PasswordInput
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            message={errors.password}
-          />
-          {/* Submit Button */}
-          <SubmitButton>Sign In</SubmitButton>
-        </form>
-
+        <LoginForm />
         <p className="text-sm text-muted-foreground text-center">
           Don't have an account?{" "}
           <Link to="/signup" className="text-primary hover:underline">

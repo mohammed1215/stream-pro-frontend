@@ -14,23 +14,20 @@ export interface VideoResponse {
   updatedAt: string
 }
 
-export const searchVideos = async (
+export async function searchVideos(
   query: string,
-  signal: AbortSignal,
-  pageNumber: number = 1,
-  pageSize: number = 10
-) => {
-  try {
-    const response = await axiosInstance.get<PaginatedType<VideoResponse>>(
-      `/api/v1/videos/search`,
-      {
-        params: { query, pageNumber, pageSize },
-        signal,
-      }
-    )
-    return response.data
-  } catch (error) {
-    console.error("Error searching videos:", error)
-    throw error
-  }
+  pageNumber: number,
+  pageSize: number,
+  signal?: AbortSignal
+): Promise<VideoResponse> {
+  const response = await axiosInstance.get("/api/v1/videos/search", {
+    params: {
+      query,
+      pageNumber,
+      pageSize,
+    },
+    signal,
+  })
+
+  return response.data
 }

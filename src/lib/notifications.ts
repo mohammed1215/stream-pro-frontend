@@ -14,11 +14,22 @@ export interface NotificationResponse {
   createdAt: string
 }
 
+export interface PaginedTypeNotification
+  extends PaginatedType<NotificationResponse> {
+  items: NotificationResponse[]
+  pageSize: number
+  pageNumber: number
+  totalPages: number
+  totalCount: number
+  hasNextPage: boolean
+  unreadTotal: number
+}
+
 export const fetchNotifications = async (
   pageNumber: number,
   pageSize: number = 10
-): Promise<PaginatedType<NotificationResponse>> => {
-  const response = await axiosInstance.get<PaginatedType<NotificationResponse>>(
+): Promise<PaginedTypeNotification> => {
+  const response = await axiosInstance.get<PaginedTypeNotification>(
     `/api/v1/notifications`,
     {
       params: {

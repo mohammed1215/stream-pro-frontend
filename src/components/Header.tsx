@@ -4,8 +4,6 @@ import { InputGroup, InputGroupButton, InputGroupInput } from "./ui/input-group"
 import { Button } from "./ui/button"
 import { router } from "../router"
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { fetchNotifications } from "../lib/notifications"
 import { NotificationDropDown } from "./NotificationDroDown"
 
 interface SearchFormProps {
@@ -56,13 +54,6 @@ export const Header = ({
   const [searchTerm, setSearchTerm] = useState("")
 
   const [openNotifications, setOpenNotifications] = useState(false)
-  const [pageNumber, setPageNumber] = useState(1)
-  const pageSize = 5
-
-  const { data: notifications, isPending } = useQuery({
-    queryKey: ["notifications", user?.id, pageNumber],
-    queryFn: () => fetchNotifications(pageNumber, pageSize),
-  })
 
   const handleSubmit = (event: React.SubmitEvent) => {
     event.preventDefault()
@@ -121,15 +112,7 @@ export const Header = ({
           >
             <Bell />
           </Button>
-          {openNotifications && (
-            <NotificationDropDown
-              notifications={notifications?.items}
-              isPending={isPending}
-              currentPage={pageNumber}
-              hasNextPage={true}
-              onPageChange={setPageNumber}
-            />
-          )}
+          {openNotifications && <NotificationDropDown hasNextPage={true} />}
         </div>
 
         <button

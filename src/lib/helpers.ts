@@ -35,3 +35,12 @@ export const formatNumber = (num: number) => {
   }
   return `${Math.floor(num / 1000000000000000)}T`
 }
+
+export function getDeviceId(): string {
+  let deviceId = localStorage.getItem("deviceId")
+  if (!deviceId) {
+    deviceId = crypto.randomUUID()
+    localStorage.setItem("deviceId", deviceId)
+  }
+  return deviceId
+}

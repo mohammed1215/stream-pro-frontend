@@ -1,9 +1,13 @@
 import axiosInstance from "./api"
 
 // Login related types and function
+type DeviceType = "ANDROID" | "IOS" | "WEB"
 export interface LoginPayload {
   email: string
   password: string
+  deviceId?: string
+  deviceToken?: string
+  deviceType?: DeviceType
 }
 
 export interface LoginResponse {
@@ -14,6 +18,7 @@ export interface LoginResponse {
       id: string
       email: string
       name: string
+      avatarUrl: string
     }
   }
 }
