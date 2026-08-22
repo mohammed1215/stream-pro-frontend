@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CustomVideoPlayer } from "../components/VideoPlayer"
-import { Link, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   likeVideo,
   unLikeVideo,
@@ -13,9 +13,13 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
+  Globe,
+  ListVideo,
   Loader2,
+  Lock,
   MoreHorizontal,
   MoreVertical,
+  Play,
   Share2,
   ThumbsDown,
   ThumbsUp,
@@ -23,7 +27,7 @@ import {
 import { toast } from "react-toastify"
 import { ChannelAvatar } from "../../../components/ChannelAvatar"
 import { Button } from "../../../components/ui/button"
-import { formatNumber } from "../../../lib/helpers"
+import { formatDuration, formatNumber } from "../../../lib/helpers"
 import {
   subscribeToChannel,
   unsubscribeToChannel,
@@ -48,6 +52,11 @@ import {
   DropdownWrapper,
   SaveDropdown,
 } from "../../../components/features/SaveDropdown"
+import {
+  getPlaylistDetails,
+  getVideosInPlaylist,
+  type PlaylistItemDto,
+} from "../../../lib/playlists"
 
 dayjs.extend(relativeTime)
 
@@ -81,7 +90,7 @@ function MoreOptionsDropdown({
 const UserAvatar = ({
   user,
 }: {
-  user?: { name?: string; avatarUrl?: string | null }
+  user?: { name?: string; avatarUrl?: string | null } | null
 }) =>
   user?.avatarUrl ? (
     <img
@@ -245,9 +254,13 @@ function CommentItem({ comment }: { comment: CommentResponse }) {
 // ==========================================
 
 export const VideoPage = () => {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { videoId } = useParams()
   const queryClient = useQueryClient()
+
+  const [params] = useSearchParams()
+  const playlistId = params.get("list")
 
   const [openMoreVideoSettings, setOpenMoreVideoSettings] = useState(false)
   const [openPlaylistDropdown, setOpenPlaylistDropdown] = useState(false)
@@ -285,7 +298,6 @@ export const VideoPage = () => {
     },
   })
 
-  // Mutations (Subscribe, Like, Comment) - kept identical to your logic
   const { mutate: mutateSubscribe } = useMutation({
     mutationFn: async (data: { channelId: string }) =>
       subscribeToChannel(data.channelId),
@@ -371,10 +383,23 @@ export const VideoPage = () => {
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   })
 
+  const { data: playlistDetails, isLoading: isLoadingPlaylist } = useQuery({
+    queryKey: ["playlist-details", playlistId],
+    queryFn: () => {
+      if (!playlistId) return undefined
+      return getPlaylistDetails(playlistId)
+    },
+    enabled: !!playlistId,
+  })
+
   function handleAddComment(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (commentInput.trim()) submitComment({ content: commentInput })
   }
+
+  const currentIndex =
+    playlistDetails?.items.findIndex((v) => v.videoId === videoId) + 1
+  const currentVideoId = videoId
 
   if (isPending) return <VideoPageSkeleton />
   if (!videoData || isError)
@@ -396,6 +421,7 @@ export const VideoPage = () => {
             <CustomVideoPlayer
               title={videoData.title}
               src={videoData.videoUrl}
+              videoId={videoData.videoId}
             />
           </div>
 
@@ -413,7 +439,7 @@ export const VideoPage = () => {
               />
               <div className="flex flex-col">
                 <Link
-                  to={`/channel/${videoData.channelId}`}
+                  to={`/channels/${videoData.channelId}`}
                   className="font-bold hover:opacity-80 transition"
                 >
                   {videoData.channelTitle}
@@ -550,18 +576,159 @@ export const VideoPage = () => {
         </div>
 
         {/* RIGHT COLUMN */}
-        <aside className="w-full lg:w-[400px] shrink-0 space-y-3">
-          <h2 className="font-bold text-lg mb-4 hidden lg:block">Up Next</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex gap-3 animate-pulse">
-                <div className="h-24 w-40 bg-muted rounded-lg shrink-0" />
-                <div className="flex-1 space-y-2 pt-1">
-                  <div className="h-4 w-full bg-muted rounded" />
-                  <div className="h-4 w-3/4 bg-muted rounded" />
+        <aside className="w-full lg:w-[400px] shrink-0 space-y-6">
+          {/* Playlist Videos Section */}
+          {playlistId && (
+            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+              {/* Playlist Header */}
+              <div className="relative p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold text-foreground line-clamp-2 mb-2">
+                      {playlistDetails?.title || "Playlist Name"}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        {playlistDetails?.isPublic ? (
+                          <>
+                            <Globe className="w-3.5 h-3.5" />
+                            <span>Public</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-3.5 h-3.5" />
+                            <span>Private</span>
+                          </>
+                        )}
+                      </div>
+                      <span className="text-border">•</span>
+                      <span>
+                        {currentIndex} / {playlistDetails?.items?.length || 0}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
+
+              {/* Playlist Video List */}
+              <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                {playlistDetails?.items?.map((video, index) => {
+                  const isCurrentVideo = video.videoId === currentVideoId
+                  return (
+                    <div
+                      key={video.videoId}
+                      className={`group relative flex gap-3 p-3 cursor-pointer transition-all duration-200 ${
+                        isCurrentVideo
+                          ? "bg-primary/10 border-l-4 border-l-primary"
+                          : "hover:bg-accent/50 border-l-4 border-l-transparent"
+                      }`}
+                      onClick={() => {
+                        navigate(`/videos/${video.videoId}?list=${playlistId}`)
+                      }}
+                    >
+                      {/* Index Number */}
+                      <div className="flex items-center justify-center w-6 shrink-0 text-xs font-medium text-muted-foreground select-none">
+                        {isCurrentVideo ? (
+                          <div className="w-1 h-1 rounded-full bg-primary" />
+                        ) : (
+                          <span>{index + 1}</span>
+                        )}
+                      </div>
+
+                      {/* Thumbnail */}
+                      <div className="relative w-24 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 shadow-sm">
+                        {video.thumbnailUrl ? (
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                            No Thumbnail
+                          </div>
+                        )}
+
+                        {/* Duration Overlay */}
+                        {video.duration && (
+                          <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                            {formatDuration(video.duration)}
+                          </div>
+                        )}
+
+                        {/* Play Button Overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Play
+                            className="w-6 h-6 text-white"
+                            fill="currentColor"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Video Info */}
+                      <div className="flex-1 min-w-0 flex flex-col gap-1">
+                        <h3
+                          className={`font-medium text-sm line-clamp-2 leading-tight transition-colors ${
+                            isCurrentVideo
+                              ? "text-primary font-semibold"
+                              : "text-foreground group-hover:text-primary"
+                          }`}
+                        >
+                          {video.title}
+                        </h3>
+                        {video.channelTitle && (
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {video.channelTitle}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Up Next Videos Section */}
+          <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <ListVideo className="w-5 h-5 text-primary" />
+              Up Next
+            </h2>
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="group flex gap-3 p-2 rounded-lg hover:bg-accent/50 cursor-pointer transition-all duration-200"
+                  onClick={() => {
+                    // Navigate to video
+                  }}
+                >
+                  {/* Thumbnail */}
+                  <div className="relative w-24 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 shadow-sm">
+                    <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 animate-pulse" />
+                    {/* Duration placeholder */}
+                    <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                      0:00
+                    </div>
+                    {/* Play Button Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Play
+                        className="w-6 h-6 text-white"
+                        fill="currentColor"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Video Info Skeleton */}
+                  <div className="flex-1 min-w-0 space-y-2 pt-1">
+                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                    <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                    <div className="h-3 w-1/2 bg-muted/50 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </aside>
       </main>

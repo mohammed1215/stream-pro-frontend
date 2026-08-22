@@ -112,7 +112,7 @@ export const Header = ({
           >
             <Bell />
           </Button>
-          {openNotifications && <NotificationDropDown hasNextPage={true} />}
+          {openNotifications && <NotificationDropDown />}
         </div>
 
         <button

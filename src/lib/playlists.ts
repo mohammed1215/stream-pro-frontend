@@ -7,6 +7,9 @@ export interface Playlist {
   isPublic: boolean
   createdAt: string
   updatedAt: string
+  videoCount: number
+  thumbnailUrl: string | null
+  firstVideoId: string | null
 }
 
 export const getPlaylists = async (): Promise<Playlist[]> => {
@@ -82,7 +85,7 @@ export interface VideoOfPlaylist {
   videoId: string
   title: string
   description: string
-  thumbnailUrl: string
+  thumbnailUrl: string | null
   indexOfVideo: number
   playlistId: string
   createdAt: string
@@ -97,13 +100,13 @@ export interface PaginatedType2<T> {
   hasNextPage: boolean
 }
 
-export const getVideosInPlaylist = async (
-  playlistId: string
-): Promise<VideoOfPlaylist[]> => {
+export const getVideosInPlaylist = async (playlistId: string) => {
   try {
-    const response = await axiosInstance.get<any[]>(
-      `/api/v1/playlists/${playlistId}/videos`
-    )
+    const response = await axiosInstance.get<
+      PaginatedType2<VideoOfPlaylist & { duration: number }> & {
+        isPublic: boolean
+      }
+    >(`/api/v1/playlists/${playlistId}/videos`)
     return response.data
   } catch (error) {
     console.error("Error fetching videos in playlist:", error)
@@ -121,6 +124,43 @@ export const getPlaylistsWithHasVideo = async (
     return response.data
   } catch (error) {
     console.error("Error fetching playlists with video:", error)
+    throw error
+  }
+}
+
+export interface PlaylistItemDto {
+  videoId: string
+  title: string
+  thumbnailUrl: string
+  duration: number
+  views: number
+  createdAt: Date
+  channelId: string
+  channelTitle: string
+  channelImageUrl: string | null
+}
+
+export interface PlaylistDetailsDto {
+  playlistId: string
+  title: string
+  description: string | null
+  isPublic: boolean
+  videoCount: number
+  items: PlaylistItemDto[]
+}
+
+export const getPlaylistDetails = async (
+  playlistId: string,
+  params: { cursor?: string; limit?: number }
+) => {
+  try {
+    const response = await axiosInstance.get<PlaylistDetailsDto>(
+      `/api/v1/playlists/${playlistId}`,
+      { params }
+    )
+    return response.data
+  } catch (error) {
+    console.error("Error fetching playlist details:", error)
     throw error
   }
 }

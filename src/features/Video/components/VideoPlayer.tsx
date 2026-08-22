@@ -31,9 +31,11 @@ import {
   SeekForward10Icon,
   SeekBackward10Icon,
 } from "@vidstack/react/icons"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Play, TimerIcon } from "lucide-react"
 import { cn } from "../../../lib/utils"
+import { trackProgress } from "../../../lib/watchHistory"
+import { useMutation } from "@tanstack/react-query"
 
 const SLIDER_FILL = "var(--slider-fill)"
 
@@ -106,9 +108,11 @@ export const SpeedMenu = () => {
 export const CustomVideoPlayer = ({
   src,
   title,
+  videoId,
 }: {
   src: string
   title: string
+  videoId: string
 }) => {
   const [isRemainder, setIsRemainder] = useState(false)
   const [edgeZoneTriggered, setEdgeZoneTriggered] = useState({
@@ -121,7 +125,10 @@ export const CustomVideoPlayer = ({
 
   const playerRef = useRef<MediaPlayerInstance>(null)
   const remote = useMediaRemote(playerRef)
-  const volume = useMediaState("volume")
+  const volume = useMediaState("volume", playerRef)
+  const currentTime = useMediaState("currentTime", playerRef)
+  const duration = useMediaState("duration", playerRef)
+  const lastSentRef = useRef(0)
 
   const handleVolumeWheel = (e: React.WheelEvent) => {
     e.preventDefault()
@@ -131,6 +138,31 @@ export const CustomVideoPlayer = ({
     const next = Math.min(1, Math.max(0, volume + delta))
     remote.changeVolume(next, e.nativeEvent)
   }
+
+  const { mutate: mutateTrack } = useMutation({
+    mutationFn: ({
+      videoId,
+      watchedSeconds,
+    }: {
+      videoId: string
+      watchedSeconds: number
+    }) => trackProgress(videoId, watchedSeconds),
+  })
+
+  useEffect(() => {
+    console.log({
+      "current time": currentTime,
+      "the sent time": lastSentRef.current,
+    })
+    if (
+      currentTime - lastSentRef.current >= 15 ||
+      currentTime === 0 ||
+      currentTime === duration
+    ) {
+      lastSentRef.current = currentTime
+      mutateTrack({ videoId, watchedSeconds: Math.floor(currentTime) })
+    }
+  }, [currentTime, videoId, mutateTrack, duration])
 
   return (
     <MediaPlayer

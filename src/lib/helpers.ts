@@ -1,3 +1,5 @@
+import type { GroupedWatchHistory } from "./watchHistory"
+
 export const formatDuration = (duration: number): string => {
   const seconds = Math.floor(duration / 1024)
   if (seconds < 60) {
@@ -43,4 +45,23 @@ export function getDeviceId(): string {
     localStorage.setItem("deviceId", deviceId)
   }
   return deviceId
+}
+
+export function mergeGroupedHistory(
+  pages: GroupedWatchHistory[][]
+): GroupedWatchHistory[] {
+  const mergedGroups: GroupedWatchHistory[] = []
+
+  for (const page of pages) {
+    for (const group of page) {
+      const existingGroup = mergedGroups.find((g) => g.label === group.label)
+      if (existingGroup) {
+        existingGroup.items.push(...group.items)
+      } else {
+        mergedGroups.push({ ...group })
+      }
+    }
+  }
+
+  return mergedGroups
 }

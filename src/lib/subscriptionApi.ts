@@ -18,11 +18,15 @@ interface SubscribeToChannelResponse {
   userId: string
 }
 
-export const subscribeToChannel = async (channelId: string) => {
+export const subscribeToChannel = async (
+  channelId: string,
+  signal?: AbortSignal
+) => {
   try {
     const data = (
       await axiosInstance.post<SubscribeToChannelResponse>(
-        `/api/v1/subscriptions/${channelId}`
+        `/api/v1/subscriptions/${channelId}`,
+        { signal }
       )
     ).data
     return data
@@ -32,11 +36,15 @@ export const subscribeToChannel = async (channelId: string) => {
   }
 }
 
-export const unsubscribeToChannel = async (channelId: string) => {
+export const unsubscribeToChannel = async (
+  channelId: string,
+  signal?: AbortSignal
+) => {
   try {
     const data = (
       await axiosInstance.delete<{ message: string }>(
-        `/api/v1/subscriptions/${channelId}`
+        `/api/v1/subscriptions/${channelId}`,
+        { signal }
       )
     ).data
     return data

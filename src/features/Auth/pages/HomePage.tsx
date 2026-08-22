@@ -1,14 +1,28 @@
+import { useQuery } from "@tanstack/react-query"
+import { getFeed } from "../../../lib/feed"
+import { HomeVideoCard } from "../../../components/HomeVideoCard"
+
 export const HomePage = () => {
+  const { data: feed } = useQuery({
+    queryKey: ["feed"],
+    queryFn: getFeed,
+  })
+
   return (
     <div className="h-screen w-full relative">
-      <main className="p-4 h-full">
-        {/* No Videos */}
-        <div className="flex flex-col items-center justify-center h-full text-center gap-4">
-          <h1 className="text-2xl font-bold">No Videos</h1>
-          <p className="text-muted-foreground">
-            You haven't searched for any videos yet. Start by using the search
-            bar above to find your favorite content.
-          </p>
+      <main className="h-full overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto w-full max-w-7xl space-y-10">
+          {feed?.sections.map((section) => (
+            <section key={section.key}>
+              <h2 className="mb-4 text-xl font-bold">{section.title}</h2>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {section.videos.map((video) => (
+                  <HomeVideoCard key={video.id ?? video.title} video={video} />
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       </main>
     </div>

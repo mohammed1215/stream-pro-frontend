@@ -1,0 +1,306 @@
+.channel-details {
+  padding: 1rem;
+}
+
+img.channel-avatar {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  border: 4px solid var(--border);
+  position: absolute;
+  bottom: 0%;
+  left: 50%;
+  transform: translateX(-50%) translateY(50%);
+}
+
+img.channel-thumbnail {
+  width: 100%;
+  height: 16rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+
+.channel-info {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+h1.channel-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.channel-description {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.channel-stats-container {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.channel-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.channel-stats-value {
+  font-weight: bold;
+  color: var(--text-foreground);
+}
+
+.channel-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.channel-buttons button {
+  padding: 0.5rem 1rem;
+  border-radius: 20rem;
+  background-color: var(--background-secondary);
+  font-size: 0.875rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+}
+
+.channel-buttons button:hover {
+  background-color: var(--background-secondary-hover);
+  color: var(--text-foreground);
+  transform: scale(1.05);
+}
+.channel-buttons button:active {
+  transform: scale(0.95);
+}
+
+.subscribed-button {
+  background-color: var(--background-secondary) !important;
+  color: var(--text-foreground) !important;
+}
+
+.channel-tabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.channel-tab {
+  padding: 0.5rem 1rem;
+  background-color: var(--background-secondary);
+  font-size: 0.875rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+  position: relative;
+}
+
+.channel-tab::before {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background-color: transparent;
+  border-radius: 5px 5px 0 0;
+}
+
+.channel-tab:hover {
+  background-color: var(--background-secondary-hover);
+  color: var(--text-foreground);
+  transform: scale(1.05);
+}
+.channel-tab.active::before {
+  border-bottom: 5px solid var(--accent);
+}
+
+.channel-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.channel-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: pointer;
+  border-radius: 1.325rem;
+  box-shadow: 0px 4px 1.1rem 0rem #00000061;
+}
+
+.channel-video-thumbnail-container,
+.channel-playlist-thumbnail-container {
+  position: relative;
+  border-radius: 1.325rem;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #00000053;
+}
+
+.channel-video-play-icon-container {
+  background-color: #000000ad;
+  top: 50%;
+  left: 50%;
+  border: 2px solid var(--border);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  border-radius: 50%;
+}
+
+.channel-video-play-icon-container,
+.channel-playlist-thumbnail {
+  position: absolute;
+
+  padding: 10px;
+
+  transition: all 0.2s;
+  color: hsl(0, 0%, 100%);
+}
+
+img.channel-video-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.channel-video-item:hover img.channel-video-thumbnail {
+  transform: scale(1.1);
+}
+
+.channel-video-backdrop,
+.channel-playlist-backdrop {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+  transition: all 0.2s;
+}
+
+.channel-video-item:hover .channel-video-backdrop,
+.channel-playlist-item:hover .channel-playlist-backdrop {
+  opacity: 1;
+}
+
+.channel-video-item:hover .channel-video-play-icon-container {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.channel-playlist-item:hover .channel-playlist-thumbnail {
+  transform: scale(1.1);
+}
+
+.channel-video-stats,
+.channel-playlist-stats {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  gap: 0.25rem;
+}
+
+.channel-video-stat,
+.channel-playlist-stat {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.channel-playlist-info,
+.channel-video-info {
+  padding: clamp(1rem, 1vw, 2.5rem);
+}
+
+.channel-video-title,
+.channel-playlist-title {
+  font-weight: bold;
+  font-size: 1.3rem;
+}
+
+.channel-video-description,
+.channel-playlist-description {
+  color: var(--text-secondary);
+}
+.channel-playlist-thumbnail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.channel-playlist-thumbnail-icon-container {
+}
+
+/* Primary owner action: styled with your system accent */
+/* Owner & Action Buttons */
+.customize-button {
+  background-color: var(--accent) !important;
+  color: #020617 !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--accent) !important;
+}
+
+.customize-button:hover {
+  background-color: var(--accent-hover) !important;
+  color: #ffffff !important;
+}
+
+.manage-button {
+  background-color: var(--background-secondary) !important;
+  color: var(--text-foreground) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.manage-button:hover {
+  background-color: var(--background-secondary-hover) !important;
+  border-color: var(--border) !important;
+}
+
+.subscribe-button {
+  background-color: #ef4444 !important; /* Red 500 */
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+.subscribed-button {
+  background-color: var(--background-secondary) !important;
+  color: var(--text-foreground) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.subscribed-button:hover {
+  background-color: var(--background-secondary-hover) !important;
+}

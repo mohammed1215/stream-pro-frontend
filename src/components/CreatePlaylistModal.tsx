@@ -3,7 +3,13 @@ import { useMutation } from "@tanstack/react-query"
 import { Globe, Loader2, Lock, X } from "lucide-react"
 import { createPlaylist } from "../lib/playlists"
 
-export const CreatePlaylistModal = ({ open, onClose }) => {
+export const CreatePlaylistModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) => {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [isPublic, setIsPublic] = useState(true)
@@ -28,8 +34,11 @@ export const CreatePlaylistModal = ({ open, onClose }) => {
   // Handles enter/exit rendering
   useEffect(() => {
     if (open) {
-      setShouldRender(true)
-      setClosing(false)
+      function enterExit() {
+        setShouldRender(true)
+        setClosing(false)
+      }
+      enterExit()
       return
     }
 
@@ -48,18 +57,21 @@ export const CreatePlaylistModal = ({ open, onClose }) => {
   // Reset form when modal opens
   useEffect(() => {
     if (!open) return
+    function resetNew() {
+      setTitle("")
+      setDescription("")
 
-    setTitle("")
-    setDescription("")
-    setIsPublic(true)
+      setIsPublic(true)
+    }
     reset()
+    resetNew()
   }, [open, reset])
 
   // Escape key + body scroll lock
   useEffect(() => {
     if (!shouldRender) return
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !closing) {
         onClose()
       }
