@@ -210,7 +210,6 @@ const EmptyPlaylistsState = () => (
 // --- Main Component ---
 
 export const PlaylistsPage = () => {
-  const queryClient = useQueryClient()
   const {
     data: playlists,
     isLoading,
@@ -219,7 +218,7 @@ export const PlaylistsPage = () => {
     queryKey: ["playlists"],
     queryFn: getPlaylists,
   })
-  const [isPlaylistModalOpened, setIsPlaylistModalOpened] = useState(false)
+  const [, setIsPlaylistModalOpened] = useState(false)
 
   if (isLoading) {
     return (

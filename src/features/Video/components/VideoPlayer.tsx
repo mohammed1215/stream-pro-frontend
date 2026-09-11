@@ -33,7 +33,7 @@ import {
   SeekBackward10Icon,
 } from "@vidstack/react/icons"
 import { useEffect, useRef, useState } from "react"
-import { Play, Settings, TimerIcon } from "lucide-react"
+import { Settings, TimerIcon } from "lucide-react"
 import { cn } from "../../../lib/utils"
 import { trackProgress } from "../../../lib/watchHistory"
 import { useMutation, useQueryClient } from "@tanstack/react-query"

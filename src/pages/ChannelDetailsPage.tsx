@@ -356,7 +356,7 @@ const ChannelVideoItem = ({
               }}
               isOwner={isOwner}
               onEdit={() => navigate(`/studio/content/${video.videoId}/edit`)}
-              onDelete={(id) => {
+              onDelete={() => {
                 // Delete mutation call
               }}
             />

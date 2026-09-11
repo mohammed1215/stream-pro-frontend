@@ -24,7 +24,6 @@ import {
   Trash2,
   Check,
   Loader2,
-  Plus,
   X,
   Globe,
   Lock,
@@ -215,7 +214,7 @@ const VideoFloatingMenu = ({
 
   const statusQueryKey = ["watch-later-status", video.id]
 
-  const { data, isPending: isLoadingStatus } = useQuery({
+  const { data } = useQuery({
     queryKey: statusQueryKey,
     queryFn: () => getWatchLaterStatus(video.id),
     enabled: isOpen,
@@ -227,7 +226,7 @@ const VideoFloatingMenu = ({
     queryClient.invalidateQueries({ queryKey: ["watch-later"] })
   }
 
-  const { mutate: saveToWatchLater, isPending: isSaving } = useMutation({
+  const { mutate: saveToWatchLater } = useMutation({
     mutationFn: () => addToWatchLater(video.id),
     onSuccess: () => {
       toast.success("Added to Watch Later", { position: "top-center" })
@@ -237,7 +236,7 @@ const VideoFloatingMenu = ({
     onError: () => toast.error("Failed to add to Watch Later"),
   })
 
-  const { mutate: unsaveFromWatchLater, isPending: isUnsaving } = useMutation({
+  const { mutate: unsaveFromWatchLater } = useMutation({
     mutationFn: () => removeFromWatchLater(video.id),
     onSuccess: () => {
       toast.success("Removed from Watch Later", { position: "top-center" })
@@ -246,8 +245,6 @@ const VideoFloatingMenu = ({
     },
     onError: () => toast.error("Failed to remove from Watch Later"),
   })
-
-  const isBusy = isSaving || isUnsaving || isLoadingStatus
 
   const handleShare = () => {
     const videoUrl = `${window.location.origin}/videos/${video.id}`
@@ -418,7 +415,6 @@ export const CreatePlaylistModal2 = ({
     isPending,
     isError,
     error,
-    reset,
   } = useMutation({
     mutationFn: createPlaylist,
     onSuccess: (data) => {

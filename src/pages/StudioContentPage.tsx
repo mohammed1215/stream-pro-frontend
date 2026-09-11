@@ -13,7 +13,7 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react"
-import { useEffect, useMemo, useState, type RefObject } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { AnimatePresence, motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
@@ -33,23 +33,6 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
     return () => clearTimeout(timeout)
   }, [value, delayMs])
   return debounced
-}
-
-function useOutsideClick(
-  ref: RefObject<HTMLElement | null>,
-  onOutside: () => void,
-  enabled: boolean
-) {
-  useEffect(() => {
-    if (!enabled) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onOutside()
-      }
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [ref, onOutside, enabled])
 }
 
 // ---------- Types ----------
@@ -298,8 +281,6 @@ const VideoRow = ({
   onEdit: () => void
   onDelete: () => void
 }) => {
-  const navigate = useNavigate()
-
   return (
     <motion.tr
       layout

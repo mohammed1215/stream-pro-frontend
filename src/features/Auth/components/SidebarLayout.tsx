@@ -14,8 +14,6 @@ import { NavLink, useLocation, useOutlet } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Header } from "../../../components/Header"
 import { PlaylistIcon } from "@vidstack/react/icons"
-import { CreatePlaylistModal2 } from "../../../components/VideoActionMenu"
-import { usePlaylistModal } from "../../../hooks/usePlaylistModal"
 import { CreatePlaylistModal } from "../../../components/CreatePlaylistModal"
 
 interface NavItemData {
@@ -143,7 +141,6 @@ export const SidebarLayout = () => {
   const [isClosed, setIsClosed] = useState(false)
   const location = useLocation()
   const currentOutlet = useOutlet()
-  const { isOpen: isOpenCreatePlaylistModal, close } = usePlaylistModal()
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <Header isClosed={isClosed} setIsClosed={setIsClosed} />

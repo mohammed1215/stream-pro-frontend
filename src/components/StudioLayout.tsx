@@ -17,8 +17,6 @@ import { useEffect, useState } from "react"
 import { NavLink, Outlet, useLocation } from "react-router-dom"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { useAuth } from "../features/Auth/hooks/useAuth"
-import { CreatePlaylistModal2 } from "./VideoActionMenu"
-import { usePlaylistModal } from "../hooks/usePlaylistModal"
 import { useCreateVideoModal } from "../hooks/useCreateVideo"
 import { CreateVideoModal } from "./CreateVideoModal"
 import { CreatePlaylistModal } from "./CreatePlaylistModal"
@@ -159,7 +157,6 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
 
 export const StudioLayout = () => {
   const user = useAuth((state) => state.user)
-  const { isOpen, close } = usePlaylistModal()
   const {
     isOpen: isVideoModalOpen,
     open: openVideoModal,

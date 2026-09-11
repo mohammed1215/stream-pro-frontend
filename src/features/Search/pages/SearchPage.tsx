@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import {
   AlertCircle,
@@ -16,7 +16,8 @@ import {
 } from "lucide-react"
 
 import { searchVideos } from "../../../lib/search"
-import type { SearchResponse, SearchVideoItem } from "../../../lib/search"
+import type { SearchResponse, VideoResponse } from "../../../lib/search"
+
 import { Button } from "../../../components/ui/button"
 import { cn } from "../../../lib/utils"
 import { formatDurationInSeconds, formatNumber } from "../../../lib/helpers"
@@ -267,14 +268,14 @@ function SearchVideoCard({
   video,
   hoverColoring,
 }: {
-  video: SearchVideoItem
+  video: VideoResponse
   hoverColoring: string
 }) {
   const [openSearchVideoDropdown, setOpenSearchVideoDropdown] = useState(false)
 
   const navigate = useNavigate()
 
-  function handleCardClick(e) {
+  function handleCardClick(e: React.MouseEvent) {
     const target = e.target as HTMLElement
 
     if (target.closest('button, a, input, [role="button"], [role="menu"]')) {
@@ -472,7 +473,7 @@ export const SearchPage = () => {
   }
 
   const items = data?.items ?? []
-  const currentPageSize = data?.pageSize || PAGE_SIZE
+  // const currentPageSize = data?.pageSize || PAGE_SIZE
 
   const hasPrevPage = page > 1
   const hasNextPage = data?.hasNextPage ?? false
@@ -506,7 +507,6 @@ export const SearchPage = () => {
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="min-w-0 space-y-3">
               <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 py-2 sm:mx-0 sm:px-0">
-                {/* زر الكل (All) */}
                 <button
                   type="button"
                   onClick={() => {
@@ -522,7 +522,6 @@ export const SearchPage = () => {
                   All
                 </button>
 
-                {/* بقية التصنيفات */}
                 {categories?.map((category) => {
                   const isSelected = selectedCategory === category.name
 

@@ -6,7 +6,6 @@ import { router } from "./router"
 import { ToastContainer } from "react-toastify"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
-import { useTheme } from "./hooks/useTheme"
 
 export const queryClient = new QueryClient()
 

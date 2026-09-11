@@ -2,7 +2,6 @@ import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   AlertCircle,
-  CheckCircle2,
   ChevronDown,
   Film,
   Image as ImageIcon,
