@@ -12,7 +12,11 @@ import {
   ListVideo,
 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { formatDuration, formatNumber } from "../lib/helpers"
+import {
+  formatDurationInSeconds,
+  formatNumber,
+  toastCustom,
+} from "../lib/helpers"
 import { useNavigate } from "react-router-dom"
 
 // Initialize dayjs relative time plugin
@@ -28,7 +32,6 @@ const VideoCard = ({
   index: number
 }) => {
   const [isHovered, setIsHovered] = useState(false)
-
   return (
     <div
       className="group flex flex-col sm:flex-row gap-4 p-2 rounded-xl hover:bg-accent/50 transition-all duration-200 cursor-pointer relative"
@@ -54,7 +57,7 @@ const VideoCard = ({
 
         {/* Duration Overlay */}
         <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
-          {formatDuration(item.video.duration)}
+          {formatDurationInSeconds(item.video.durationSeconds)}
         </div>
       </div>
 
@@ -162,7 +165,7 @@ const EmptyWatchLaterState = () => {
 // --- Main Component ---
 
 export const WatchLaterPage = () => {
-  const { user } = useAuth()
+  const user = useAuth((state) => state.user)
   const {
     data: watchLater,
     isLoading,

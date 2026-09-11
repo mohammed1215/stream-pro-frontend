@@ -132,7 +132,7 @@ export interface PlaylistItemDto {
   videoId: string
   title: string
   thumbnailUrl: string
-  duration: number
+  durationSeconds: number
   views: number
   createdAt: Date
   channelId: string

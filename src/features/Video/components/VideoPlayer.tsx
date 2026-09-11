@@ -16,6 +16,7 @@ import {
   MediaPlayerInstance,
   Menu,
   usePlaybackRateOptions,
+  useVideoQualityOptions,
 } from "@vidstack/react"
 import {
   PlayIcon,
@@ -32,10 +33,11 @@ import {
   SeekBackward10Icon,
 } from "@vidstack/react/icons"
 import { useEffect, useRef, useState } from "react"
-import { Play, TimerIcon } from "lucide-react"
+import { Play, Settings, TimerIcon } from "lucide-react"
 import { cn } from "../../../lib/utils"
 import { trackProgress } from "../../../lib/watchHistory"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { recordViewApi } from "../../../lib/video"
 
 const SLIDER_FILL = "var(--slider-fill)"
 
@@ -105,6 +107,55 @@ export const SpeedMenu = () => {
   )
 }
 
+export const QualityMenu = () => {
+  const options = useVideoQualityOptions({ sort: "descending" })
+
+  // إذا كان الفيديو لا يحتوي على جودات متعددة (مثل ملف MP4 عادي)، يتم إخفاء الزر تلقائياً
+  if (!options.length) return null
+
+  const hint = options.selectedQuality?.height
+    ? `${options.selectedQuality.height}p`
+    : "Auto"
+
+  return (
+    <Menu.Root className="relative">
+      <Menu.Button className="group relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition-colors hover:bg-white/20">
+        <Settings className="h-5 w-5" />
+
+        {/* تلميح عند التحويم (Hover Hint) */}
+        <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-xs font-medium opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100">
+          {hint}
+        </span>
+      </Menu.Button>
+
+      <Menu.Content
+        className={cn(
+          "absolute bottom-full right-0 z-50 mb-2 max-h-56 w-36 overflow-y-auto",
+          "origin-bottom-right rounded-lg border border-white/10 bg-zinc-950/95 p-1 shadow-xl backdrop-blur",
+          "invisible scale-95 translate-y-1 opacity-0 transition-all duration-200",
+          "data-[open]:visible data-[open]:scale-100 data-[open]:translate-y-0 data-[open]:opacity-100"
+        )}
+      >
+        <Menu.RadioGroup
+          className="flex w-full flex-col gap-1"
+          value={options.selectedValue}
+        >
+          {options.map(({ label, value, select }) => (
+            <Menu.Radio
+              key={value}
+              value={value}
+              onSelect={select}
+              className={radioClassName}
+            >
+              {label}
+            </Menu.Radio>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Content>
+    </Menu.Root>
+  )
+}
+
 export const CustomVideoPlayer = ({
   src,
   title,
@@ -130,6 +181,8 @@ export const CustomVideoPlayer = ({
   const duration = useMediaState("duration", playerRef)
   const lastSentRef = useRef(0)
 
+  const queryClient = useQueryClient()
+
   const handleVolumeWheel = (e: React.WheelEvent) => {
     e.preventDefault()
     console.log(e.deltaY)
@@ -149,11 +202,15 @@ export const CustomVideoPlayer = ({
     }) => trackProgress(videoId, watchedSeconds),
   })
 
+  const { mutate: recordView } = useMutation({
+    mutationFn: recordViewApi,
+    onSuccess: () => {
+      console.log("View recorded successfully")
+      queryClient.invalidateQueries({ queryKey: ["video-details"] })
+    },
+  })
+
   useEffect(() => {
-    console.log({
-      "current time": currentTime,
-      "the sent time": lastSentRef.current,
-    })
     if (
       currentTime - lastSentRef.current >= 15 ||
       currentTime === 0 ||
@@ -161,6 +218,11 @@ export const CustomVideoPlayer = ({
     ) {
       lastSentRef.current = currentTime
       mutateTrack({ videoId, watchedSeconds: Math.floor(currentTime) })
+    }
+
+    if (currentTime > 5 && lastSentRef.current === 0) {
+      lastSentRef.current = currentTime
+      recordView(videoId)
     }
   }, [currentTime, videoId, mutateTrack, duration])
 
@@ -288,6 +350,7 @@ export const CustomVideoPlayer = ({
             <ClosedCaptionsOnIcon className="w-6 h-6 shrink-0 hidden media-captions:block" />
           </CaptionButton>
           <SpeedMenu />
+          <QualityMenu />
           <Controls.Group
             className="group/volume relative flex items-center shrink-0"
             onWheel={handleVolumeWheel}

@@ -4,7 +4,7 @@ export interface VideoSummary {
   id: string
   title: string
   thumbnailUrl: string
-  duration: number
+  durationSeconds: number
 }
 
 export interface ChannelSummary {

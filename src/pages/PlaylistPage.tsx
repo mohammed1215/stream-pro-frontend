@@ -12,7 +12,7 @@ import {
   ListVideo,
 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { formatDuration, formatNumber } from "../lib/helpers"
+import { formatDurationInSeconds, formatNumber } from "../lib/helpers"
 import { useNavigate } from "react-router-dom"
 import { getPlaylistDetails, type PlaylistItemDto } from "../lib/playlists"
 
@@ -59,7 +59,7 @@ const VideoCard = ({
 
         {/* Duration Overlay */}
         <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
-          {formatDuration(item.duration)}
+          {formatDurationInSeconds(item.duration)}
         </div>
       </div>
 
@@ -170,7 +170,7 @@ const EmptyPlaylistState = () => {
 // --- Main Component ---
 
 export const PlaylistPage = () => {
-  const { user } = useAuth()
+  const user = useAuth((state) => state.user)
   const [queries] = useSearchParams()
   const playlistId = queries.get("list")
 

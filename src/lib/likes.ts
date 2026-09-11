@@ -12,7 +12,7 @@ interface VideoSummary {
   createdAt: string
   channel: ChannelSummary
   title: string
-  duration: number
+  durationSeconds: number
   views: number
 }
 export interface LikedVideoItem {

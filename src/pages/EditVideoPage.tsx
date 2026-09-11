@@ -1,23 +1,36 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useParams, useNavigate } from "react-router-dom"
+import { motion, AnimatePresence } from "framer-motion"
+import axios from "axios"
 import {
   ArrowLeft,
   Loader2,
   Upload,
   Film,
-  Image as ImageIcon,
+  ImageIcon,
   Save,
   AlertCircle,
   CheckCircle2,
+  Globe,
+  Lock,
+  Copy,
+  Check,
+  Sparkles,
+  ExternalLink,
+  X,
 } from "lucide-react"
 import {
-  updateVideoThumbnail,
-  videoDetails,
   updateVideoDetails,
-  uploadVideoMedia,
-  updateVideoStatus,
   type VideoDetailResponse,
+  ownerVideoDetails,
+  getVideoThumbnailSignatureApi,
+  uploadThumbnailToCloudApi,
+  confirmUploadThumbnailApi,
+  getVideoMediaSignatureApi,
+  uploadVideoToCloudApi,
+  confirmUploadVideoApi,
+  updateVideoStatus,
 } from "../lib/video"
 
 export const StudioEditVideoPage = () => {
@@ -25,129 +38,245 @@ export const StudioEditVideoPage = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  // Local state for editable form fields
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [copied, setCopied] = useState(false)
   const [toast, setToast] = useState<{
     message: string
     type: "success" | "error"
   } | null>(null)
 
-  // Fetch initial video data
+  // Upload Progress Tracking
+  const [thumbnailProgress, setThumbnailProgress] = useState<number | null>(
+    null
+  )
+  const [mediaProgress, setMediaProgress] = useState<number | null>(null)
+
+  // 🛑 Abort Controllers for Uploads
+  const thumbnailAbortRef = useRef<AbortController | null>(null)
+  const mediaAbortRef = useRef<AbortController | null>(null)
+
   const {
     data: video,
     isLoading,
     isError,
   } = useQuery<VideoDetailResponse, Error>({
     queryKey: ["video", videoId],
-    queryFn: () => videoDetails(videoId!),
+    queryFn: () => ownerVideoDetails(videoId!),
     enabled: !!videoId,
   })
 
-  // Populate form when data loads
   useEffect(() => {
     if (video) {
-      setTitle(video.title)
+      setTitle(video.title || "")
       setDescription(video.description || "")
     }
   }, [video])
 
+  // Cleanup abort controllers on unmount
+  useEffect(() => {
+    return () => {
+      thumbnailAbortRef.current?.abort()
+      mediaAbortRef.current?.abort()
+    }
+  }, [])
+
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
+    setTimeout(() => setToast(null), 3500)
   }
 
-  // Mutations
+  const handleCopyLink = () => {
+    if (!videoId) return
+    navigator.clipboard.writeText(`${window.location.origin}/watch/${videoId}`)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+    showToast("Share link copied to clipboard", "success")
+  }
+
+  // 1. Cancel Handlers
+  const handleCancelThumbnailUpload = () => {
+    if (thumbnailAbortRef.current) {
+      thumbnailAbortRef.current.abort()
+      thumbnailAbortRef.current = null
+      setThumbnailProgress(null)
+      showToast("Thumbnail upload cancelled", "error")
+    }
+  }
+
+  const handleCancelMediaUpload = () => {
+    if (mediaAbortRef.current) {
+      mediaAbortRef.current.abort()
+      mediaAbortRef.current = null
+      setMediaProgress(null)
+      showToast("Video upload cancelled", "error")
+    }
+  }
+
+  // 2. Thumbnail Upload Mutation
   const thumbnailMutation = useMutation({
-    mutationFn: (file: File) => updateVideoThumbnail(videoId!, file),
-    // Use 'variables' to access the file argument in the success callback
+    mutationFn: async ({ videoId, file }: { videoId: string; file: File }) => {
+      setThumbnailProgress(0)
+      const controller = new AbortController()
+      thumbnailAbortRef.current = controller
+
+      const res = await getVideoThumbnailSignatureApi(videoId)
+      const cloudFormData = new FormData()
+      cloudFormData.append("file", file)
+      cloudFormData.append("api_key", res.apiKey || "")
+      cloudFormData.append("signature", res.signature)
+      cloudFormData.append("timestamp", res.timestamp.toString())
+      cloudFormData.append("folder", res.folder)
+      cloudFormData.append("public_id", res.public_id)
+      cloudFormData.append("transformation", res.transformation)
+
+      const cloudRes = await uploadThumbnailToCloudApi({
+        uploadUrl: res.uploadUrl,
+        formData: cloudFormData,
+        signal: controller.signal,
+        onProgress: (percent) => setThumbnailProgress(percent),
+      })
+
+      return confirmUploadThumbnailApi(videoId, {
+        publicId: cloudRes.public_id,
+        version: cloudRes.version,
+        signature: cloudRes.signature,
+        thumbnailUrl: cloudRes.secure_url,
+      })
+    },
     onSuccess: (data, variables) => {
       queryClient.setQueryData(["video", videoId], (old: any) => ({
         ...old,
-        thumbnailUrl: data.thumbnailUrl || URL.createObjectURL(variables),
+        thumbnailUrl: data.thumbnailUrl || URL.createObjectURL(variables.file),
       }))
-      showToast("Thumbnail updated successfully!", "success")
+      queryClient.invalidateQueries({ queryKey: ["video", videoId] })
+      showToast("Thumbnail updated successfully", "success")
     },
-    onError: () => showToast("Failed to upload thumbnail.", "error"),
+    onError: (err: any) => {
+      if (
+        axios.isCancel(err) ||
+        err?.name === "CanceledError" ||
+        err?.name === "AbortError"
+      ) {
+        return
+      }
+      showToast("Failed to upload thumbnail. Please try again.", "error")
+    },
+    onSettled: () => {
+      thumbnailAbortRef.current = null
+      setThumbnailProgress(null)
+    },
   })
 
+  // 3. Media Upload Mutation
   const mediaMutation = useMutation({
-    mutationFn: (file: File) => uploadVideoMedia(videoId!, file),
-    // Use 'variables' to access the file argument in the success callback
+    mutationFn: async ({ videoId, file }: { videoId: string; file: File }) => {
+      setMediaProgress(0)
+      const controller = new AbortController()
+      mediaAbortRef.current = controller
+
+      const res = await getVideoMediaSignatureApi(videoId)
+      const cloudFormData = new FormData()
+      cloudFormData.append("file", file)
+      cloudFormData.append("api_key", res.apiKey || "")
+      cloudFormData.append("signature", res.signature)
+      cloudFormData.append("timestamp", res.timestamp.toString())
+      cloudFormData.append("folder", res.folder)
+      cloudFormData.append("public_id", res.public_id)
+      cloudFormData.append("eager", res.eager)
+      cloudFormData.append("eager_async", String(res.eager_async))
+      cloudFormData.append("eager_notification_url", res.eager_notification_url)
+
+      const cloudRes = await uploadVideoToCloudApi({
+        uploadUrl: res.uploadUrl,
+        formData: cloudFormData,
+        signal: controller.signal,
+        onProgress: (percent) => setMediaProgress(percent),
+      })
+
+      return confirmUploadVideoApi(videoId, {
+        publicId: cloudRes.public_id,
+        version: cloudRes.version,
+        signature: cloudRes.signature,
+        bytes: cloudRes.bytes,
+        duration: cloudRes.duration,
+      })
+    },
     onSuccess: (data, variables) => {
       queryClient.setQueryData(["video", videoId], (old: any) => ({
         ...old,
-        videoUrl: data.videoUrl || URL.createObjectURL(variables),
+        hlsUrl: data.hlsUrl || URL.createObjectURL(variables.file),
       }))
-      showToast("Video file updated successfully!", "success")
+      queryClient.invalidateQueries({ queryKey: ["video", videoId] })
+      showToast("Video source replaced successfully", "success")
     },
-    onError: () => showToast("Failed to upload video file.", "error"),
+    onError: (err: any) => {
+      if (
+        axios.isCancel(err) ||
+        err?.name === "CanceledError" ||
+        err?.name === "AbortError"
+      ) {
+        return
+      }
+      showToast("Failed to upload video file. Please try again.", "error")
+    },
+    onSettled: () => {
+      mediaAbortRef.current = null
+      setMediaProgress(null)
+    },
   })
 
+  // 4. Details Mutation
   const detailsMutation = useMutation({
     mutationFn: () => updateVideoDetails(videoId!, { title, description }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["video", videoId] })
-      showToast("Details saved successfully!", "success")
-      setTimeout(() => navigate(-1), 1000) // Go back after saving
+      showToast("Video details saved", "success")
     },
-    onError: () => showToast("Failed to save details.", "error"),
+    onError: () => showToast("Couldn't save changes.", "error"),
   })
 
-  // 3. Status Mutation (Publish/Unpublish) with Optimistic UI
+  // 5. Status Mutation
   const statusMutation = useMutation({
     mutationFn: () => updateVideoStatus(videoId!),
     onMutate: async () => {
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ["video", videoId] })
-
-      // Snapshot the previous value
       const previousVideo = queryClient.getQueryData(["video", videoId])
-
-      // Optimistically update to the new value
       queryClient.setQueryData(["video", videoId], (old: any) => ({
         ...old,
         isPublished: !old?.isPublished,
       }))
-
       return { previousVideo }
     },
-    onError: (err, variables, context) => {
-      // If the mutation fails, roll back to the snapshot value
+    onError: (_err, _vars, context) => {
       if (context?.previousVideo) {
         queryClient.setQueryData(["video", videoId], context.previousVideo)
       }
-      showToast("Failed to update visibility status.", "error")
+      showToast("Could not update visibility.", "error")
     },
     onSuccess: () => {
       showToast(
-        `Video ${
-          !video?.isPublished ? "published" : "unpublished"
-        } successfully!`,
+        !video?.isPublished ? "Set to Private" : "Published to Public",
         "success"
       )
     },
     onSettled: () => {
-      // Always refetch after error or success to ensure sync with server
       queryClient.invalidateQueries({ queryKey: ["video", videoId] })
     },
   })
 
+  const hasChanges =
+    video &&
+    (title !== video.title || description !== (video.description || ""))
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 p-6">
-        <div className="max-w-6xl mx-auto animate-pulse space-y-8">
-          <div className="h-10 w-64 bg-slate-200 rounded-lg" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-              <div className="aspect-video bg-slate-200 rounded-2xl" />
-              <div className="aspect-video bg-slate-200 rounded-2xl" />
-            </div>
-            <div className="space-y-4">
-              <div className="h-10 bg-slate-200 rounded-lg" />
-              <div className="h-32 bg-slate-200 rounded-lg" />
-            </div>
-          </div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100 md:p-10">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-600 dark:text-cyan-400" />
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Loading video workspace...
+          </p>
         </div>
       </div>
     )
@@ -155,319 +284,524 @@ export const StudioEditVideoPage = () => {
 
   if (isError || !video) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-slate-900">
-            Failed to load video
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 dark:bg-slate-950">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90"
+        >
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20">
+            <AlertCircle className="h-7 w-7" />
+          </div>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Video Not Found
           </h2>
-          <p className="text-slate-500 mt-1">
-            We couldn't find this video or it was deleted.
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            This video might have been deleted or the access link is invalid.
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold"
+            className="mt-6 w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700"
           >
-            Go Back
+            Return to Studio
           </button>
-        </div>
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 selection:bg-cyan-500/20 selection:text-cyan-700 dark:bg-slate-950 dark:text-slate-100 dark:selection:text-cyan-300">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-slate-100 rounded-lg transition"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
-          </button>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900">Video details</h1>
-            <p className="text-xs text-slate-500">
-              Manage metadata and media for this video
-            </p>
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 px-6 py-4 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/80">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-0.5" />
+            </button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+                  Video Details
+                </span>
+                <span className="text-slate-300 dark:text-slate-600">•</span>
+                <span className="truncate text-xs text-slate-500 dark:text-slate-400">
+                  ID: {videoId}
+                </span>
+              </div>
+              <h1 className="truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                {video.title || "Untitled Video"}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={handleCopyLink}
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
+              ) : (
+                <Copy className="h-3.5 w-3.5 text-slate-400" />
+              )}
+              <span className="hidden sm:inline">Copy Link</span>
+            </button>
+
+            {video.isPublished && (
+              <a
+                href={`/videos/${videoId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                <span className="hidden sm:inline">View Watch Page</span>
+              </a>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition"
-          >
-            Discard
-          </button>
-          <button
-            onClick={() => detailsMutation.mutate()}
-            disabled={detailsMutation.isPending}
-            className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition flex items-center gap-2 disabled:opacity-50"
-          >
-            {detailsMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Save changes
-          </button>
-        </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Media & Thumbnail */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Video Media Section */}
-          <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-slate-900">
-                Video File
-              </h2>
-              {mediaMutation.isPending && (
-                <span className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-                  <Loader2 className="w-3 h-3 animate-spin" /> Uploading...
-                </span>
-              )}
-            </div>
-
-            {mediaMutation.isPending ? (
-              <div className="aspect-video w-full rounded-xl bg-slate-100 flex flex-col items-center justify-center gap-3">
-                <div className="relative h-2 w-3/4 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="absolute inset-0 bg-indigo-500 animate-pulse origin-left"
-                    style={{ transform: "scaleX(0.6)" }}
-                  />
+      {/* Main Container */}
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          {/* Left Column: Details & Thumbnail */}
+          <div className="space-y-6 lg:col-span-7">
+            {/* Title & Description */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Basic Information
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Describe your video clearly for search and viewers
+                  </p>
                 </div>
-                <p className="text-sm font-medium text-slate-500">
-                  Processing video...
-                </p>
+                <Sparkles className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
               </div>
-            ) : video.videoUrl ? (
-              <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black group-hover:ring-2 ring-indigo-500 transition-all">
-                {/* Video is NO LONGER wrapped in a label */}
-                <video
-                  src={video.videoUrl}
-                  controls
-                  className="w-full h-full object-contain"
-                />
 
-                {/* The overlay is now the label. Removed pointer-events-none to catch clicks */}
-                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <input
-                    type="file"
-                    accept="video/*"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        mediaMutation.mutate(file)
-                        e.target.value = "" // Crucial: resets input so the same file can be re-uploaded
-                      }
-                    }}
-                  />
-                  <span className="text-white font-semibold bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm flex items-center gap-2">
-                    <Upload className="w-4 h-4" /> Replace Video File
-                  </span>
-                </label>
-              </div>
-            ) : (
-              // Empty state remains a label for easy initial upload
-              <label className="relative block group cursor-pointer">
-                <input
-                  type="file"
-                  accept="video/*"
-                  className="sr-only"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      mediaMutation.mutate(file)
-                      e.target.value = ""
-                    }
-                  }}
-                />
-                <div className="aspect-video w-full rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50/50 transition-all">
-                  <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center mb-3">
-                    <Film className="w-6 h-6 text-indigo-600" />
+              <div className="mt-5 space-y-5">
+                <div>
+                  <div className="mb-2 flex items-center justify-between text-xs">
+                    <label
+                      htmlFor="title"
+                      className="font-medium text-slate-700 dark:text-slate-300"
+                    >
+                      Title{" "}
+                      <span className="text-rose-500 dark:text-rose-400">
+                        *
+                      </span>
+                    </label>
+                    <span
+                      className={`font-mono text-[11px] ${
+                        title.length > 90
+                          ? "text-amber-500 dark:text-amber-400"
+                          : "text-slate-400 dark:text-slate-500"
+                      }`}
+                    >
+                      {title.length}/100
+                    </span>
                   </div>
-                  <p className="text-sm font-semibold text-slate-700">
-                    Click to upload video
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    MP4, WebM or MOV (Max 2GB)
-                  </p>
+                  <input
+                    id="title"
+                    type="text"
+                    maxLength={100}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Add a title that describes your video"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white dark:placeholder-slate-500 dark:focus:bg-transparent"
+                  />
                 </div>
-              </label>
-            )}
-            {mediaMutation.isError && (
-              <div className="mt-3 flex items-center gap-2 text-xs font-medium text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                <AlertCircle className="w-4 h-4" /> Failed to upload video.
-                Please try again.
-              </div>
-            )}
-          </section>
 
-          {/* Thumbnail Section */}
-          <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-slate-900">
-                Thumbnail
-              </h2>
-              {thumbnailMutation.isPending && (
-                <span className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-                  <Loader2 className="w-3 h-3 animate-spin" /> Uploading...
-                </span>
-              )}
+                <div>
+                  <div className="mb-2 flex items-center justify-between text-xs">
+                    <label
+                      htmlFor="desc"
+                      className="font-medium text-slate-700 dark:text-slate-300"
+                    >
+                      Description
+                    </label>
+                    <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                      {description.length} characters
+                    </span>
+                  </div>
+                  <textarea
+                    id="desc"
+                    rows={6}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Tell viewers what your video is about, add timestamps or links..."
+                    className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white dark:placeholder-slate-500 dark:focus:bg-transparent"
+                  />
+                </div>
+              </div>
             </div>
 
-            {thumbnailMutation.isPending ? (
-              <div className="aspect-video w-full rounded-xl bg-slate-100 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-              </div>
-            ) : (
-              <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-200 group-hover:ring-2 ring-indigo-500 transition-all">
-                {video.thumbnailUrl ? (
-                  <img
-                    src={video.thumbnailUrl}
-                    alt="Thumbnail"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                    <ImageIcon className="w-12 h-12 text-slate-300" />
+            {/* Thumbnail Manager */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Custom Thumbnail
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Select or upload a picture that shows what is in your video
+                  </p>
+                </div>
+
+                {/* Progress Badge with Cancel Button */}
+                {thumbnailProgress !== null && (
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 rounded-lg bg-cyan-50 px-2.5 py-1 text-xs font-semibold text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400">
+                      <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                      {thumbnailProgress}%
+                    </span>
+                    <button
+                      onClick={handleCancelThumbnailUpload}
+                      title="Cancel upload"
+                      className="rounded-lg border border-rose-200 bg-rose-50 p-1 text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/50"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 )}
-                {/* The overlay acts as the label, preventing weird click behaviors on the image */}
-                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                {/* Thumbnail Preview Area */}
+                <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
+                  {video.thumbnailUrl ? (
+                    <img
+                      src={video.thumbnailUrl}
+                      alt="Thumbnail preview"
+                      className={`h-full w-full object-cover transition duration-300 ${
+                        thumbnailProgress !== null
+                          ? "scale-105 blur-[2px] opacity-60"
+                          : "hover:scale-105"
+                      }`}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-600">
+                      <ImageIcon className="h-8 w-8" />
+                      <span className="text-xs">No thumbnail active</span>
+                    </div>
+                  )}
+
+                  {/* Thumbnail Overlay with Cancel Action */}
+                  {thumbnailProgress !== null && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/75 p-4 text-center backdrop-blur-sm">
+                      <p className="text-xs font-semibold text-white">
+                        {thumbnailProgress < 100
+                          ? `Uploading (${thumbnailProgress}%)`
+                          : "Processing image..."}
+                      </p>
+                      <div className="mt-2.5 h-1.5 w-full max-w-[140px] overflow-hidden rounded-full bg-slate-700">
+                        <motion.div
+                          className="h-full bg-cyan-400"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${thumbnailProgress}%` }}
+                          transition={{ duration: 0.2 }}
+                        />
+                      </div>
+                      <button
+                        onClick={handleCancelThumbnailUpload}
+                        className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-rose-400 hover:text-rose-300 transition"
+                      >
+                        <X className="h-3 w-3" /> Cancel upload
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Trigger Area */}
+                <label className="group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-5 text-center transition hover:border-cyan-500 hover:bg-cyan-50/30 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-cyan-500/60 dark:hover:bg-slate-900/60">
                   <input
                     type="file"
                     accept="image/*"
                     className="sr-only"
+                    disabled={thumbnailMutation.isPending}
                     onChange={(e) => {
                       const file = e.target.files?.[0]
-                      if (file) {
-                        thumbnailMutation.mutate(file)
+                      if (file && videoId) {
+                        thumbnailMutation.mutate({ videoId, file })
                         e.target.value = ""
                       }
                     }}
                   />
-                  <span className="text-white font-semibold bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4" />{" "}
-                    {video.thumbnailUrl
-                      ? "Change Thumbnail"
-                      : "Upload Thumbnail"}
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition group-hover:scale-110 group-hover:text-cyan-600 dark:border-transparent dark:bg-slate-900 dark:text-slate-300 dark:group-hover:text-cyan-400">
+                    <Upload className="h-5 w-5" />
+                  </div>
+                  <span className="mt-3 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {thumbnailMutation.isPending
+                      ? "Uploading..."
+                      : "Upload New Thumbnail"}
+                  </span>
+                  <span className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                    16:9 ratio • PNG, JPG or WEBP up to 5MB
                   </span>
                 </label>
               </div>
-            )}
-            <p className="text-xs text-slate-500 mt-2">
-              Recommended size: 1280x720 pixels (16:9 aspect ratio)
-            </p>
-          </section>
-        </div>
+            </div>
+          </div>
 
-        {/* Right Column: Details Form */}
-        <div className="lg:col-span-1">
-          <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm sticky top-24">
-            <h2 className="text-base font-semibold text-slate-900 mb-6">
-              Video Details
-            </h2>
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-slate-700 mb-1.5"
-                >
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter a catchy title..."
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm"
-                  required
-                />
-              </div>
+          {/* Right Column: Player & Visibility */}
+          <div className="space-y-6 lg:col-span-5">
+            {/* Video Player Card */}
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-800/80">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Source Video
+                </span>
 
-              <div>
-                <label
-                  htmlFor="desc"
-                  className="block text-sm font-medium text-slate-700 mb-1.5"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="desc"
-                  rows={6}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Tell viewers about your video..."
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition resize-none shadow-sm"
-                />
-              </div>
-
-              <div className="pt-4 border-t border-slate-100">
-                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                {mediaProgress !== null && (
                   <div className="flex items-center gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        Visibility
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {video.isPublished
-                          ? "Visible to everyone"
-                          : "Only visible to you"}
-                      </p>
-                    </div>
-                    {statusMutation.isPending && (
-                      <Loader2 className="w-3.5 h-3.5 text-slate-400 animate-spin" />
-                    )}
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-cyan-600 dark:text-cyan-400">
+                      <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                      {mediaProgress}%
+                    </span>
+                    <button
+                      onClick={handleCancelMediaUpload}
+                      title="Cancel video upload"
+                      className="rounded-lg border border-rose-200 bg-rose-50 p-1 text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/50"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => statusMutation.mutate()}
-                    disabled={statusMutation.isPending}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                      video.isPublished ? "bg-indigo-600" : "bg-slate-300"
-                    } ${
-                      statusMutation.isPending
-                        ? "opacity-70 cursor-not-allowed"
-                        : ""
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                        video.isPublished ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
+                )}
               </div>
-            </form>
-          </section>
+
+              {/* Video Player Canvas */}
+              <div className="relative aspect-video bg-black">
+                {video.hlsUrl ? (
+                  <video
+                    src={video.hlsUrl}
+                    controls
+                    className={`h-full w-full object-contain transition ${
+                      mediaProgress !== null ? "opacity-30 blur-sm" : ""
+                    }`}
+                  />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-600">
+                    <Film className="h-8 w-8" />
+                    <span className="text-xs">No media file uploaded</span>
+                  </div>
+                )}
+
+                {/* Video Upload Overlay with Cancel Action */}
+                {mediaProgress !== null && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/85 p-6 text-center backdrop-blur-sm">
+                    <Loader2 className="mb-3 h-8 w-8 animate-spin text-cyan-400" />
+                    <p className="text-sm font-bold text-white">
+                      {mediaProgress < 100
+                        ? `Uploading Video: ${mediaProgress}%`
+                        : "Encoding & processing HLS..."}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {mediaProgress < 100
+                        ? "Please keep this browser window open"
+                        : "Generating streaming manifests..."}
+                    </p>
+
+                    <div className="mt-4 h-2 w-full max-w-xs overflow-hidden rounded-full bg-slate-800">
+                      <motion.div
+                        className="h-full bg-cyan-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${mediaProgress}%` }}
+                        transition={{ duration: 0.2 }}
+                      />
+                    </div>
+
+                    <button
+                      onClick={handleCancelMediaUpload}
+                      className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/20"
+                    >
+                      <X className="h-3.5 w-3.5" /> Cancel Upload
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Trigger / Action Bar */}
+              <div className="border-t border-slate-100 bg-slate-50/50 p-4 dark:border-transparent dark:bg-slate-900/30">
+                {mediaProgress !== null ? (
+                  <div className="space-y-2 py-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-600 dark:text-slate-300">
+                        Uploading media...
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400">
+                          {mediaProgress}%
+                        </span>
+                        <button
+                          onClick={handleCancelMediaUpload}
+                          className="font-medium text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 underline text-[11px]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                      <div
+                        className="h-full bg-cyan-500 transition-all duration-200"
+                        style={{ width: `${mediaProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white">
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="sr-only"
+                      disabled={mediaMutation.isPending}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file && videoId) {
+                          mediaMutation.mutate({ videoId, file })
+                          e.target.value = ""
+                        }
+                      }}
+                    />
+                    <Film className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                    <span>Replace Video File</span>
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* Visibility / Publishing Control */}
+            <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Visibility
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Choose who can watch this video right now
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-950">
+                <button
+                  type="button"
+                  onClick={() => video.isPublished && statusMutation.mutate()}
+                  disabled={statusMutation.isPending}
+                  className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition-all ${
+                    !video.isPublished
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
+                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Lock className="h-3.5 w-3.5" />
+                  <span>Private</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => !video.isPublished && statusMutation.mutate()}
+                  disabled={statusMutation.isPending}
+                  className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition-all ${
+                    video.isPublished
+                      ? "bg-cyan-600 text-white shadow-sm shadow-cyan-500/20"
+                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  }`}
+                >
+                  {statusMutation.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Globe className="h-3.5 w-3.5" />
+                  )}
+                  <span>Public</span>
+                </button>
+              </div>
+
+              <p className="text-[11px] leading-relaxed text-slate-500">
+                {video.isPublished
+                  ? "🌐 Public: Anyone on the platform can discover and watch this video."
+                  : "🔒 Private: Only you can view this video in your studio."}
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Floating Bottom Action Dock */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/80 px-6 py-4 backdrop-blur-lg dark:border-slate-800/80 dark:bg-slate-950/80">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                hasChanges ? "animate-pulse bg-amber-500" : "bg-emerald-500"
+              }`}
+            />
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              {hasChanges
+                ? "You have unsaved changes"
+                : "All changes up to date"}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setTitle(video.title || "")
+                setDescription(video.description || "")
+              }}
+              disabled={!hasChanges || detailsMutation.isPending}
+              className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+            >
+              Discard
+            </button>
+
+            <motion.button
+              whileHover={hasChanges ? { scale: 1.02 } : {}}
+              whileTap={hasChanges ? { scale: 0.98 } : {}}
+              onClick={() => detailsMutation.mutate()}
+              disabled={!hasChanges || detailsMutation.isPending}
+              className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold transition ${
+                hasChanges
+                  ? "bg-cyan-600 font-bold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-500 dark:bg-cyan-500 dark:text-slate-950 dark:shadow-cyan-500/20 dark:hover:bg-cyan-400"
+                  : "cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+              }`}
+            >
+              {detailsMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              Save Changes
+            </motion.button>
+          </div>
         </div>
       </div>
 
       {/* Toast Notification */}
-      {toast && (
-        <div
-          className={`fixed bottom-6 right-6 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border z-50 animate-in slide-in-from-bottom-4 fade-in duration-300 ${
-            toast.type === "success"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-              : "bg-red-50 border-red-200 text-red-800"
-          }`}
-        >
-          {toast.type === "success" ? (
-            <CheckCircle2 className="w-5 h-5" />
-          ) : (
-            <AlertCircle className="w-5 h-5" />
-          )}
-          <span className="text-sm font-medium">{toast.message}</span>
-        </div>
-      )}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            className={`fixed bottom-20 right-6 z-50 flex items-center gap-2.5 rounded-xl border px-4 py-3 text-xs font-medium shadow-2xl backdrop-blur-md ${
+              toast.type === "success"
+                ? "border-emerald-200 bg-emerald-50/90 text-emerald-800 ring-1 ring-emerald-300 dark:border-emerald-500/30 dark:bg-emerald-950/80 dark:text-emerald-200 dark:ring-emerald-500/20"
+                : "border-rose-200 bg-rose-50/90 text-rose-800 ring-1 ring-rose-300 dark:border-rose-500/30 dark:bg-rose-950/80 dark:text-rose-200 dark:ring-rose-500/20"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+            )}
+            <span>{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

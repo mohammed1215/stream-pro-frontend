@@ -1,6 +1,6 @@
 import { ImageOff, Music2 } from "lucide-react"
 import type { VideoResponse } from "../lib/search"
-import { formatDuration } from "../lib/helpers"
+import { formatDurationInSeconds } from "../lib/helpers"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 
@@ -39,7 +39,8 @@ export const VideoSearchCard = ({
           </div>
         )}
         <span className="absolute bottom-2 flex gap-1 items-center right-2 bg-black/50 text-white text-xs font-medium px-1 py-0.5 rounded-[5px]">
-          <Music2 className="w-3.5 h-3.5" /> {formatDuration(video.duration)}
+          <Music2 className="w-3.5 h-3.5" />{" "}
+          {formatDurationInSeconds(video.durationSeconds)}
         </span>
       </div>
       <div className="p-5 flex items-center gap-3 mb-4">

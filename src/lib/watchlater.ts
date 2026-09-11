@@ -10,7 +10,7 @@ export interface VideoSummary {
   id: string
   title: string
   thumbnailUrl: string
-  duration: number
+  durationSeconds: number
   views: number
   createdAt: string
   channel: ChannelSummary
@@ -32,6 +32,23 @@ export const getWatchLater = async (limit: number, cursor?: string) => {
     {
       params: { limit, cursor },
     }
+  )
+  return res.data
+}
+
+export const addToWatchLater = async (videoId: string) => {
+  const res = await axiosInstance.post("/api/v1/watchlaters", { videoId })
+  return res.data
+}
+
+export const removeFromWatchLater = async (videoId: string) => {
+  const res = await axiosInstance.delete(`/api/v1/watchlaters/${videoId}`)
+  return res.data
+}
+
+export const getWatchLaterStatus = async (videoId: string) => {
+  const res = await axiosInstance.get<{ isInWatchLater: boolean }>(
+    `/api/v1/watchlaters/${videoId}/status`
   )
   return res.data
 }

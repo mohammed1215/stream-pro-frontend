@@ -52,3 +52,58 @@ export const signUpUser = async (
     await axiosInstance.post<SignUpResponse>("/api/v1/auth/register", payload)
   ).data
 }
+
+export const refreshToken = async (): Promise<{ accessToken: string }> => {
+  return (
+    await axiosInstance.post<{ accessToken: string }>("/api/v1/auth/refresh")
+  ).data
+}
+
+export const logoutUser = async (): Promise<void> => {
+  await axiosInstance.post("/api/v1/auth/logout")
+}
+
+export const logoutAllOtherDevices = async (): Promise<void> => {
+  await axiosInstance.post("/api/v1/auth/logout-all")
+}
+
+export const revokeSession = async (sessionId: string): Promise<void> => {
+  await axiosInstance.post(`/api/v1/sessions/${sessionId}/revoke`)
+}
+
+export const editProfile = async (
+  payload: {
+    avatar: File | null
+    name: string
+  },
+  onProgress?: (percent: number) => void
+): Promise<{
+  success: boolean
+  data: {
+    id: string
+    email: string
+    avatarUrl: string
+    name: string
+    createdAt: string
+    updatedAt: string
+  }
+}> => {
+  return await axiosInstance.patchForm<{
+    success: boolean
+    data: {
+      id: string
+      email: string
+      avatarUrl: string
+      name: string
+      createdAt: string
+      updatedAt: string
+    }
+  }>("/api/v1/profile/me", payload, {
+    onUploadProgress: (progressEvent) => {
+      const progress = Math.round(
+        progressEvent.progress ? progressEvent.progress * 100 : 0
+      )
+      onProgress?.(progress)
+    },
+  })
+}

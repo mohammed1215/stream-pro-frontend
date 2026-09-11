@@ -10,7 +10,7 @@ export const HomePage = () => {
 
   return (
     <div className="h-screen w-full relative">
-      <main className="h-full overflow-y-auto p-4 md:p-6">
+      <main className="p-4 md:p-6">
         <div className="mx-auto w-full max-w-7xl space-y-10">
           {feed?.sections.map((section) => (
             <section key={section.key}>

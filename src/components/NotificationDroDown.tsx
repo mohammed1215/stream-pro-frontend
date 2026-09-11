@@ -128,7 +128,7 @@ function EmptyNotifications() {
 export const NotificationDropDown = ({
   onClose,
 }: NotificationDropDownProps) => {
-  const { user } = useAuth()
+  const user = useAuth((state) => state.user)
   const queryClient = useQueryClient()
   const listRef = useRef<HTMLUListElement>(null)
 

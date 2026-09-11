@@ -1,18 +1,21 @@
 import { Link } from "react-router-dom"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { formatDuration, formatNumber } from "../lib/helpers"
+import { motion, type Variants } from "framer-motion"
+import { Play } from "lucide-react"
+import { formatDurationInSeconds, formatNumber } from "../lib/helpers"
+import { VideoActionMenu } from "./VideoActionMenu"
 
 dayjs.extend(relativeTime)
 
-type VideoCardVideo = {
+export type VideoCardVideo = {
   id?: string
   title?: string
   thumbnailUrl?: string
-  duration?: number
+  durationSeconds?: number
   views?: number
   createdAt?: string
-  channel: {
+  channel?: {
     id?: string
     title?: string
     thumbnailUrl?: string
@@ -21,9 +24,29 @@ type VideoCardVideo = {
 
 type VideoCardProps = {
   video: VideoCardVideo
+  isOwner?: boolean
+  onEdit?: (video: VideoCardVideo) => void
+  onDelete?: (videoId: string) => void
 }
 
-export const HomeVideoCard = ({ video }: VideoCardProps) => {
+export const cardItemVariants: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.35,
+      ease: [0.25, 1, 0.5, 1],
+    },
+  },
+}
+
+export const HomeVideoCard = ({
+  video,
+  isOwner,
+  onEdit,
+  onDelete,
+}: VideoCardProps) => {
   const views = typeof video.views === "number" ? video.views : null
 
   const meta = [
@@ -32,95 +55,122 @@ export const HomeVideoCard = ({ video }: VideoCardProps) => {
       : null,
     video.createdAt ? dayjs(video.createdAt).fromNow() : null,
   ]
-    .filter((value): value is string => Boolean(value))
+    .filter(Boolean)
     .join(" • ")
 
   return (
-    <Link
-      to={video.id ? `/videos/${video.id}` : "#"}
-      onClick={(event) => {
-        if (!video.id) event.preventDefault()
-      }}
-      className={`
-        group flex h-full flex-col overflow-hidden rounded-2xl bg-white
-        ring-1 ring-zinc-200 shadow-sm transition-all duration-300
-        hover:-translate-y-1 hover:shadow-xl hover:ring-zinc-300
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-        dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-zinc-700
-      `}
+    <motion.div
+      variants={cardItemVariants}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="group relative flex flex-col"
     >
-      <div className="relative aspect-video w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-        {video.thumbnailUrl ? (
-          <img
-            src={video.thumbnailUrl}
-            alt={video.title ?? "Video thumbnail"}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 text-sm font-medium text-zinc-400 dark:from-zinc-800 dark:to-zinc-900 dark:text-zinc-500">
-            No preview
-          </div>
-        )}
+      {/* 1. Thumbnail Link */}
+      <Link
+        to={video.id ? `/videos/${video.id}` : "#"}
+        onClick={(e) => !video.id && e.preventDefault()}
+        className="flex flex-col rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        aria-label={video.title ?? "Watch video"}
+      >
+        <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-muted ring-1 ring-border/50">
+          {video.thumbnailUrl ? (
+            <img
+              src={video.thumbnailUrl}
+              alt={video.title ?? "Video thumbnail"}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-muted/60 text-xs font-medium text-muted-foreground">
+              No preview available
+            </div>
+          )}
 
-        {/* Hover gradient overlay */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-        {/* Play icon overlay */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 group-hover:opacity-100">
-          <div className="flex h-12 w-12 scale-90 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
-            <svg
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-              className="h-5 w-5 translate-x-0.5"
-            >
-              <path d="M8 5.14v13.72L19 12 8 5.14z" />
-            </svg>
+          {/* Hover Play Button */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 backdrop-blur-[1px] transition-opacity duration-300 group-hover:opacity-100">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
+              <Play className="h-5 w-5 fill-current translate-x-0.5" />
+            </div>
           </div>
+
+          {/* Duration Badge */}
+          {video.durationSeconds ? (
+            <span className="absolute bottom-2.5 right-2.5 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-semibold tracking-wider text-white shadow-sm backdrop-blur-md">
+              {formatDurationInSeconds(video.durationSeconds)}
+            </span>
+          ) : null}
         </div>
+      </Link>
 
-        {video.duration ? (
-          <span className="absolute bottom-2 right-2 rounded-lg bg-black/75 px-2 py-1 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur-sm">
-            {formatDuration(video.duration)}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="flex flex-1 gap-3 p-4">
-        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-zinc-100 ring-1 ring-zinc-200 transition duration-300 group-hover:ring-zinc-300 dark:bg-zinc-800 dark:ring-zinc-700">
+      {/* 2. Video Meta Bar */}
+      <div className="flex gap-3 pt-3">
+        {/* Channel Avatar */}
+        <Link
+          to={video.channel?.id ? `/channels/${video.channel.id}` : "#"}
+          onClick={(e) => !video.channel?.id && e.preventDefault()}
+          className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60 transition-transform hover:scale-105"
+        >
           {video.channel?.thumbnailUrl ? (
             <img
               src={video.channel.thumbnailUrl}
               alt={video.channel.title ?? "Channel avatar"}
               loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-zinc-600 dark:text-zinc-300">
+            <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase text-muted-foreground">
               {video.channel?.title?.[0] ?? "V"}
             </div>
           )}
-        </div>
+        </Link>
 
+        {/* Title, Details, & Menu */}
         <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-blue-600 dark:text-zinc-100 dark:group-hover:text-blue-400">
-            {video.title ?? "Untitled video"}
-          </h3>
+          <div className="flex items-start justify-between gap-1">
+            <Link
+              to={video.id ? `/videos/${video.id}` : "#"}
+              onClick={(e) => !video.id && e.preventDefault()}
+              className="min-w-0 flex-1"
+            >
+              <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
+                {video.title ?? "Untitled video"}
+              </h3>
+            </Link>
 
-          {video.channel?.title ? (
-            <p className="mt-1.5 truncate text-xs font-medium text-zinc-500 transition-colors duration-200 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200">
+            {/* Fixed Action Menu Trigger */}
+            {video.id && (
+              <div className="relative shrink-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
+                <VideoActionMenu
+                  video={{
+                    id: video.id,
+                    title: video.title,
+                    thumbnailUrl: video.thumbnailUrl,
+                  }}
+                  isOwner={isOwner}
+                  onEdit={() => onEdit?.(video)}
+                  onDelete={onDelete}
+                />
+              </div>
+            )}
+          </div>
+
+          {video.channel?.title && (
+            <Link
+              to={video.channel?.id ? `/channels/${video.channel.id}` : "#"}
+              onClick={(e) => !video.channel?.id && e.preventDefault()}
+              className="mt-1 block truncate text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
               {video.channel.title}
-            </p>
-          ) : null}
+            </Link>
+          )}
 
-          {meta ? (
-            <p className="mt-0.5 truncate text-xs text-zinc-400 dark:text-zinc-500">
+          {meta && (
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/80">
               {meta}
             </p>
-          ) : null}
+          )}
         </div>
       </div>
-    </Link>
+    </motion.div>
   )
 }

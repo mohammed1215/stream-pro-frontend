@@ -1,25 +1,56 @@
 import {
   Eye,
-  VideoIcon,
+  Video as VideoIcon,
   Search,
-  MoreVertical,
   Loader2,
   Plus,
   Film,
   Clock,
   TrendingUp,
-  Play,
   ListVideo,
   ArrowUpRight,
+  Edit3,
+  Trash2,
+  ExternalLink,
 } from "lucide-react"
-import "./StudioContentPage.css"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type RefObject } from "react"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import { AnimatePresence, motion } from "framer-motion"
+import { useNavigate } from "react-router-dom"
 import {
   fetchOwnerVideosChannel,
   type FetchOwnerVideosChannelResponse,
 } from "../lib/video"
-import { useNavigate } from "react-router-dom"
+import { usePlaylistModal } from "../hooks/usePlaylistModal"
+import { useVideo } from "../hooks/useVideo"
+import { formatDurationInSeconds } from "../lib/helpers"
+
+// ---------- Hooks ----------
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebounced(value), delayMs)
+    return () => clearTimeout(timeout)
+  }, [value, delayMs])
+  return debounced
+}
+
+function useOutsideClick(
+  ref: RefObject<HTMLElement | null>,
+  onOutside: () => void,
+  enabled: boolean
+) {
+  useEffect(() => {
+    if (!enabled) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onOutside()
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [ref, onOutside, enabled])
+}
 
 // ---------- Types ----------
 interface StudioVideo {
@@ -30,7 +61,7 @@ interface StudioVideo {
   channelId: string
   channelTitle: string
   channelImageUrl: string
-  duration: number
+  durationSeconds: number
   views: number
   isPublished: boolean
 }
@@ -43,7 +74,6 @@ interface StudioPlaylist {
   thumbnailUrl: string
 }
 
-// ---------- Mock Playlists ----------
 const MOCK_PLAYLISTS: StudioPlaylist[] = [
   {
     id: "p1",
@@ -61,125 +91,95 @@ const MOCK_PLAYLISTS: StudioPlaylist[] = [
   },
 ]
 
-// ---------- Formatters ----------
 const fmtViews = (n: number) => {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
   return n.toLocaleString("en-US")
 }
 
-const fmtDuration = (s: number) => {
-  const m = Math.floor(s / 60)
-  const ss = s % 60
-  return `${m}:${String(ss).padStart(2, "0")}`
+// ---------- Motion Variants ----------
+const staggerContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.05 },
+  },
 }
 
-// ---------- Summary card ----------
+const fadeUpItem = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } },
+}
+
+// ---------- Summary Metric Card ----------
 const StudioContentCard = ({
   title,
   number,
   spanWord,
   Icon,
   description,
-  accent,
-  trend, // Added mock trend prop
+  trend,
 }: {
   title: string
   number: number | string
   spanWord?: string
   description: string
-  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  accent: "blue" | "emerald" | "purple" | "amber"
+  Icon: React.ComponentType<{ className?: string }>
   trend?: { value: string; isPositive: boolean }
 }) => {
-  const accents = {
-    blue: {
-      bg: "from-blue-50/50 to-white",
-      text: "text-blue-600",
-      iconBg: "bg-blue-100 text-blue-600",
-      ring: "ring-blue-500/10",
-    },
-    emerald: {
-      bg: "from-emerald-50/50 to-white",
-      text: "text-emerald-600",
-      iconBg: "bg-emerald-100 text-emerald-600",
-      ring: "ring-emerald-500/10",
-    },
-    purple: {
-      bg: "from-purple-50/50 to-white",
-      text: "text-purple-600",
-      iconBg: "bg-purple-100 text-purple-600",
-      ring: "ring-purple-500/10",
-    },
-    amber: {
-      bg: "from-amber-50/50 to-white",
-      text: "text-amber-600",
-      iconBg: "bg-amber-100 text-amber-600",
-      ring: "ring-amber-500/10",
-    },
-  }
-  const colors = accents[accent]
-
   return (
-    <div
-      className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-gradient-to-br p-6 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
-      style={{
-        backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))`,
-      }}
+    <motion.div
+      variants={fadeUpItem}
+      whileHover={{ y: -2 }}
+      className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-slate-700"
     >
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-0 group-hover:opacity-100 transition-opacity`}
-      />
-      <div className="relative flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <h3 className="text-3xl font-bold tracking-tight text-slate-900">
-              {typeof number === "number" ? number.toLocaleString() : number}
-            </h3>
-            {spanWord && (
-              <span className="text-sm font-medium text-slate-400">
-                {spanWord}
-              </span>
-            )}
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <p className="text-xs text-slate-500">{description}</p>
-            {trend && (
-              <span
-                className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  trend.isPositive
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                <ArrowUpRight
-                  className={`h-2.5 w-2.5 ${
-                    !trend.isPositive ? "rotate-90" : ""
-                  }`}
-                />
-                {trend.value}
-              </span>
-            )}
-          </div>
-        </div>
-        <div
-          className={`flex h-11 w-11 items-center justify-center rounded-xl ${colors.iconBg} ring-1 ${colors.ring} transition-transform group-hover:scale-110`}
-        >
-          <Icon className="h-5 w-5" />
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {title}
+        </span>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition group-hover:bg-cyan-500/10 group-hover:text-cyan-600 dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-cyan-500/10 dark:group-hover:text-cyan-400">
+          <Icon className="h-4 w-4" />
         </div>
       </div>
-    </div>
+
+      <div className="mt-3 flex items-baseline gap-2">
+        <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          {typeof number === "number" ? number.toLocaleString() : number}
+        </h3>
+        {spanWord && (
+          <span className="text-xs font-medium text-slate-400">{spanWord}</span>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800/80">
+        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          {description}
+        </p>
+        {trend && (
+          <span
+            className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+              trend.isPositive
+                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
+                : "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
+            }`}
+          >
+            <ArrowUpRight
+              className={`h-3 w-3 ${!trend.isPositive ? "rotate-90" : ""}`}
+            />
+            {trend.value}
+          </span>
+        )}
+      </div>
+    </motion.div>
   )
 }
 
-// ---------- Status pill ----------
+// ---------- Status Badge ----------
 const StatusPill = ({ isPublished }: { isPublished: boolean }) => (
   <span
-    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${
+    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
       isPublished
-        ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-        : "bg-slate-50 text-slate-600 ring-slate-500/10"
+        ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-500/30"
+        : "bg-slate-100 text-slate-600 ring-1 ring-slate-400/20 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700"
     }`}
   >
     <span
@@ -187,13 +187,13 @@ const StatusPill = ({ isPublished }: { isPublished: boolean }) => (
         isPublished ? "bg-emerald-500" : "bg-slate-400"
       }`}
     />
-    {isPublished ? "Published" : "Draft"}
+    {isPublished ? "Public" : "Draft"}
   </span>
 )
 
 // ---------- Toolbar ----------
-type StatusFilter = "all" | "published" | "draft"
-type SortOption = "date-desc" | "date-asc" | "views"
+type StatusFilter = "ALL" | "PUBLISHED" | "UNPUBLISHED"
+type SortOption = "NEWEST" | "OLDEST" | "MOST_VIEWED"
 
 const ContentToolbar = ({
   query,
@@ -212,75 +212,185 @@ const ContentToolbar = ({
   onSortChange: (v: SortOption) => void
   totalCount: number
 }) => (
-  <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200/60 bg-white p-3 shadow-sm">
-    <div className="relative flex-1 min-w-[200px]">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+  <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+    {/* Search Input */}
+    <div className="relative min-w-[220px] flex-1">
+      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       <input
         type="search"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
-        placeholder="Search videos..."
-        className="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        placeholder="Filter your videos by title..."
+        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-9 pr-4 text-xs font-medium text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:bg-slate-950"
       />
     </div>
 
-    <select
-      value={status}
-      onChange={(e) => onStatusChange(e.target.value as StatusFilter)}
-      className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100"
-    >
-      <option value="all">All Statuses</option>
-      <option value="published">Published</option>
-      <option value="draft">Drafts</option>
-    </select>
+    {/* Status Filter */}
+    <div className="flex items-center gap-1.5">
+      <select
+        value={status}
+        onChange={(e) => onStatusChange(e.target.value as StatusFilter)}
+        className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300"
+      >
+        <option value="ALL">All Visibility</option>
+        <option value="PUBLISHED">Public</option>
+        <option value="UNPUBLISHED">Draft / Private</option>
+      </select>
 
-    <select
-      value={sort}
-      onChange={(e) => onSortChange(e.target.value as SortOption)}
-      className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100"
-    >
-      <option value="date-desc">Newest First</option>
-      <option value="date-asc">Oldest First</option>
-      <option value="views">Most Viewed</option>
-    </select>
+      {/* Sort Filter */}
+      <select
+        value={sort}
+        onChange={(e) => onSortChange(e.target.value as SortOption)}
+        className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300"
+      >
+        <option value="NEWEST">Date: Newest</option>
+        <option value="OLDEST">Date: Oldest</option>
+        <option value="MOST_VIEWED">Most Views</option>
+      </select>
+    </div>
 
-    <div className="ml-auto flex items-center gap-2 text-xs font-medium text-slate-500">
-      <span className="inline-flex h-6 min-w-[24px] items-center justify-center rounded-full bg-indigo-100 px-2 text-indigo-700 font-bold">
+    {/* Video Counter */}
+    <div className="ml-auto hidden items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 sm:flex">
+      <span className="inline-flex h-6 items-center justify-center rounded-lg bg-cyan-50 px-2 font-mono text-xs font-bold text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400">
         {totalCount}
       </span>
-      <span>total videos</span>
+      <span>videos</span>
     </div>
   </div>
 )
 
 // ---------- Skeleton Loader ----------
 const SkeletonRow = () => (
-  <tr className="animate-pulse">
+  <tr className="animate-pulse border-b border-slate-100 dark:border-slate-800/60">
     <td className="px-6 py-4">
       <div className="flex items-center gap-4">
-        <div className="h-20 w-36 rounded-xl bg-slate-200" />
+        <div className="h-16 w-28 shrink-0 rounded-xl bg-slate-200 dark:bg-slate-800" />
         <div className="space-y-2">
-          <div className="h-4 w-48 rounded bg-slate-200" />
-          <div className="h-3 w-32 rounded bg-slate-100" />
+          <div className="h-4 w-44 rounded-lg bg-slate-200 dark:bg-slate-800" />
+          <div className="h-3 w-24 rounded-lg bg-slate-100 dark:bg-slate-850" />
         </div>
       </div>
     </td>
     <td className="px-6 py-4">
-      <div className="h-6 w-20 rounded-full bg-slate-200" />
+      <div className="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
     </td>
     <td className="px-6 py-4">
-      <div className="h-4 w-16 rounded bg-slate-200" />
+      <div className="h-4 w-12 rounded bg-slate-200 dark:bg-slate-800" />
     </td>
     <td className="px-6 py-4">
-      <div className="h-4 w-12 rounded bg-slate-200" />
+      <div className="h-4 w-10 rounded bg-slate-200 dark:bg-slate-800" />
     </td>
-    <td className="px-6 py-4">
-      <div className="ml-auto h-8 w-8 rounded-full bg-slate-100" />
+    <td className="px-6 py-4 text-right">
+      <div className="ml-auto h-7 w-7 rounded-lg bg-slate-200 dark:bg-slate-800" />
     </td>
   </tr>
 )
 
-// ---------- Videos table ----------
+// ---------- Video Row with Quick Actions ----------
+const VideoRow = ({
+  video,
+  index,
+  onEdit,
+  onDelete,
+}: {
+  video: StudioVideo
+  index: number
+  onEdit: () => void
+  onDelete: () => void
+}) => {
+  const navigate = useNavigate()
+
+  return (
+    <motion.tr
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -10 }}
+      transition={{ duration: 0.2, delay: Math.min(index, 6) * 0.02 }}
+      className="group border-b border-slate-100 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-900/40"
+    >
+      {/* Video Thumbnail & Info */}
+      <td className="px-6 py-3.5">
+        <div className="flex items-center gap-4">
+          <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition group-hover:border-cyan-500/40 dark:border-slate-800 dark:bg-slate-950">
+            <img
+              src={video.thumbnailUrl}
+              alt={video.title}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            />
+            <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white backdrop-blur-sm">
+              {formatDurationInSeconds(video.durationSeconds)}
+            </span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <button
+              onClick={onEdit}
+              className="truncate text-left text-sm font-semibold text-slate-900 transition hover:text-cyan-600 dark:text-white dark:hover:text-cyan-400 block max-w-md"
+            >
+              {video.title || "Untitled video"}
+            </button>
+            <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+              <span>{video.channelTitle}</span>
+              <span>•</span>
+              <span className="font-mono text-[11px]">{video.videoId}</span>
+            </div>
+          </div>
+        </div>
+      </td>
+
+      {/* Visibility */}
+      <td className="px-6 py-3.5 whitespace-nowrap">
+        <StatusPill isPublished={video.isPublished} />
+      </td>
+
+      {/* Views */}
+      <td className="px-6 py-3.5 text-xs font-semibold tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">
+        {fmtViews(video.views)}
+      </td>
+
+      {/* Duration */}
+      <td className="px-6 py-3.5 font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+        {formatDurationInSeconds(video.durationSeconds)}
+      </td>
+
+      {/* Quick Row Actions */}
+      <td className="px-6 py-3.5 text-right whitespace-nowrap">
+        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <button
+            onClick={onEdit}
+            title="Edit details"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-cyan-500 hover:text-cyan-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-400"
+          >
+            <Edit3 className="h-3.5 w-3.5" />
+          </button>
+
+          {video.isPublished && (
+            <a
+              href={`/videos/${video.videoId}`}
+              target="_blank"
+              rel="noreferrer"
+              title="Watch video"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-cyan-500 hover:text-cyan-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-400"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+
+          <button
+            onClick={onDelete}
+            title="Delete video"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-rose-500/40 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </td>
+    </motion.tr>
+  )
+}
+
+// ---------- Videos Table Component ----------
 interface VideosTableProps {
   query: string
   status: StatusFilter
@@ -296,8 +406,6 @@ export const VideosTable = ({
   onEdit,
   onDelete,
 }: VideosTableProps) => {
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-
   const {
     data,
     isLoading,
@@ -307,14 +415,17 @@ export const VideosTable = ({
     isFetchingNextPage,
   } = useInfiniteQuery<FetchOwnerVideosChannelResponse, Error>({
     queryKey: ["videos", "owner", { query, status, sort }],
-    queryFn: ({ pageParam }) =>
-      fetchOwnerVideosChannel({
-        page: pageParam,
-        limit: 10,
-        query,
-        status,
-        sort,
-      }),
+    queryFn: ({ pageParam }) => {
+      if (typeof pageParam === "number")
+        return fetchOwnerVideosChannel({
+          page: pageParam,
+          limit: 10,
+          query,
+          status,
+          sortBy: sort,
+        })
+      return []
+    },
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.pageNumber + 1 : undefined,
     initialPageParam: 1,
@@ -328,7 +439,7 @@ export const VideosTable = ({
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-white">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50">
         <table className="w-full border-collapse">
           <tbody>
             {[...Array(5)].map((_, i) => (
@@ -342,150 +453,76 @@ export const VideosTable = ({
 
   if (isError) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 py-16 text-center text-sm font-medium text-red-600">
-        Couldn't load your videos. Please try again.
+      <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-12 text-center text-sm font-medium text-rose-600 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400">
+        Couldn't load channel videos. Please refresh or try again later.
       </div>
     )
   }
 
   if (videos.length === 0) {
     return (
-      <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-slate-200 bg-white py-20 text-center">
-        <div className="mb-4 grid h-16 w-16 place-items-center rounded-full bg-indigo-50 text-indigo-500">
-          <VideoIcon className="h-8 w-8" />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white/50 py-20 text-center dark:border-slate-800 dark:bg-slate-900/30"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-400">
+          <Film className="h-6 w-6" />
         </div>
-        <h3 className="text-lg font-bold text-slate-900">
-          {totalCount === 0 ? "No videos yet" : "No matching videos"}
-        </h3>
-        <p className="mt-2 max-w-sm text-sm text-slate-500">
+        <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
           {totalCount === 0
-            ? "Your uploaded videos will appear here. Start creating to see them on your channel."
-            : "We couldn't find any videos matching your filters. Try adjusting your search."}
+            ? "No videos uploaded yet"
+            : "No videos match your query"}
+        </h3>
+        <p className="mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
+          {totalCount === 0
+            ? "Upload your first video to start building your channel audience."
+            : "Try adjusting your search terms or filters to find what you need."}
         </p>
-        {totalCount === 0 && (
-          <button className="mt-6 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md">
-            <Plus className="h-4 w-4" /> Upload video
-          </button>
-        )}
-      </div>
+      </motion.div>
     )
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b border-slate-100 bg-slate-50/30 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            <th className="px-6 py-4">Video</th>
-            <th className="px-6 py-4">Status</th>
-            <th className="px-6 py-4">Views</th>
-            <th className="px-6 py-4">Duration</th>
-            <th className="w-12 px-6 py-4" />
-          </tr>
-        </thead>
-        <tbody>
-          {videos.map((video) => (
-            <tr
-              key={video.videoId}
-              className="group border-b border-slate-100 last:border-0 transition-all hover:bg-indigo-50/30 hover:border-l-4 hover:border-l-indigo-500 -ml-1 pl-1"
-            >
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative h-20 w-36 shrink-0 overflow-hidden rounded-xl bg-slate-100 shadow-sm group-hover:shadow-md transition-shadow">
-                    <img
-                      src={video.thumbnailUrl}
-                      alt={video.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center backdrop-blur-sm shadow-lg">
-                        <Play
-                          className="h-4 w-4 text-slate-900 ml-0.5"
-                          fill="currentColor"
-                        />
-                      </div>
-                    </div>
-                    {/* Duration Badge on Thumbnail */}
-                    <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                      {fmtDuration(video.duration)}
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                      {video.title}
-                    </p>
-                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
-                      <img
-                        src={video.channelImageUrl}
-                        alt=""
-                        className="h-4 w-4 rounded-full"
-                      />
-                      {video.channelTitle}
-                    </p>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <StatusPill isPublished={video.isPublished} />
-              </td>
-              <td className="px-6 py-4 text-sm font-semibold tabular-nums text-slate-700">
-                {fmtViews(video.views)}
-              </td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-500">
-                {fmtDuration(video.duration)}
-              </td>
-              <td className="relative px-6 py-4 text-right">
-                <button
-                  onClick={() =>
-                    setOpenMenuId(
-                      openMenuId === video.videoId ? null : video.videoId
-                    )
-                  }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                  aria-label="Row actions"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </button>
-
-                {openMenuId === video.videoId && (
-                  <div className="absolute right-6 top-12 z-20 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl ring-1 ring-black/5 origin-top-right animate-in fade-in zoom-in-95 duration-200">
-                    <button
-                      onClick={() => {
-                        onEdit(video.videoId)
-                        setOpenMenuId(null)
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-                    >
-                      Edit details
-                    </button>
-                    <button
-                      onClick={() => {
-                        onDelete(video.videoId)
-                        setOpenMenuId(null)
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                    >
-                      Delete video
-                    </button>
-                  </div>
-                )}
-              </td>
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-slate-200/80 bg-slate-50/75 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-400">
+              <th className="px-6 py-3.5">Video</th>
+              <th className="px-6 py-3.5">Visibility</th>
+              <th className="px-6 py-3.5">Views</th>
+              <th className="px-6 py-3.5">Duration</th>
+              <th className="px-6 py-3.5 text-right">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <AnimatePresence initial={false}>
+              {videos.map((video, index) => (
+                <VideoRow
+                  key={video.videoId}
+                  video={video}
+                  index={index}
+                  onEdit={() => onEdit(video.videoId)}
+                  onDelete={() => onDelete(video.videoId)}
+                />
+              ))}
+            </AnimatePresence>
+          </tbody>
+        </table>
+      </div>
 
       {hasNextPage && (
-        <div className="flex justify-center border-t border-slate-100 py-4">
+        <div className="flex justify-center border-t border-slate-100 p-4 dark:border-slate-800/60">
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition-all hover:bg-indigo-100 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             {isFetchingNextPage ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-500" />
+                <span>Loading more...</span>
               </>
             ) : (
               "Load more videos"
@@ -497,98 +534,102 @@ export const VideosTable = ({
   )
 }
 
-// ---------- Playlists grid ----------
+// ---------- Playlists Grid Component ----------
 const PlaylistsGrid = ({ playlists }: { playlists: StudioPlaylist[] }) => {
+  const { open } = usePlaylistModal()
+
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {/* Create Playlist Card */}
-      <button className="group flex min-h-[240px] flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-slate-400 transition-all hover:border-indigo-400 hover:bg-indigo-50/80 hover:text-indigo-500 hover:shadow-lg hover:-translate-y-1">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-md transition-transform group-hover:scale-110 group-hover:shadow-indigo-100">
-          <Plus className="h-7 w-7" />
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+    >
+      {/* Create Playlist Action Card */}
+      <motion.button
+        variants={fadeUpItem}
+        onClick={() => open()}
+        whileHover={{ y: -3 }}
+        whileTap={{ scale: 0.98 }}
+        className="group flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white/40 p-6 text-slate-500 transition hover:border-cyan-500 hover:bg-cyan-50/20 hover:text-cyan-600 dark:border-slate-800 dark:bg-slate-900/20 dark:text-slate-400 dark:hover:border-cyan-500/60 dark:hover:bg-cyan-950/20 dark:hover:text-cyan-400"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition group-hover:scale-110 group-hover:text-cyan-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:group-hover:text-cyan-400">
+          <Plus className="h-5 w-5" />
         </div>
         <div className="text-center">
-          <span className="text-sm font-bold">Create new playlist</span>
-          <p className="mt-1 text-xs text-slate-500">Organize your content</p>
-        </div>
-      </button>
-
-      {playlists.length === 0 ? (
-        <div className="col-span-full py-16 text-center">
-          <Film className="mx-auto h-12 w-12 text-slate-300" />
-          <h3 className="mt-4 text-sm font-semibold text-slate-900">
-            No playlists yet
-          </h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Start organizing your videos by creating your first playlist.
+          <span className="text-sm font-bold text-slate-900 dark:text-white">
+            Create Playlist
+          </span>
+          <p className="mt-0.5 text-xs text-slate-400">
+            Group your videos together
           </p>
         </div>
-      ) : (
-        playlists.map((pl) => (
-          <div
-            key={pl.id}
-            className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:border-indigo-200"
-          >
-            <div className="relative aspect-video overflow-hidden bg-slate-100">
-              <img
-                src={pl.thumbnailUrl}
-                alt={pl.title}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      </motion.button>
 
-              {/* Play Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center backdrop-blur-sm shadow-xl">
-                  <Play
-                    className="h-6 w-6 text-slate-900 ml-1"
-                    fill="currentColor"
-                  />
-                </div>
-              </div>
+      {/* Playlist Cards */}
+      {playlists.map((pl) => (
+        <motion.div
+          key={pl.id}
+          variants={fadeUpItem}
+          whileHover={{ y: -3 }}
+          className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
+        >
+          <div className="relative aspect-video overflow-hidden bg-slate-950">
+            <img
+              src={pl.thumbnailUrl}
+              alt={pl.title}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105 opacity-90"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
-                <span className="text-xs font-bold bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <ListVideo className="h-3 w-3" />
-                  {pl.videoCount} videos
-                </span>
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                    pl.isPublic
-                      ? "bg-emerald-500 text-white"
-                      : "bg-slate-700 text-slate-200"
-                  }`}
-                >
-                  {pl.isPublic ? "Public" : "Private"}
-                </span>
-              </div>
-            </div>
-            <div className="p-5">
-              <p className="truncate text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                {pl.title}
-              </p>
-              <p className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
-                <Clock className="h-3 w-3" />
-                Updated recently
-              </p>
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
+              <span className="flex items-center gap-1.5 rounded-lg bg-black/60 px-2 py-1 font-mono text-[10px] font-bold backdrop-blur-md">
+                <ListVideo className="h-3 w-3 text-cyan-400" />
+                {pl.videoCount} videos
+              </span>
+              <span
+                className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  pl.isPublic
+                    ? "bg-emerald-500/80 text-white"
+                    : "bg-slate-700/80 text-slate-200"
+                }`}
+              >
+                {pl.isPublic ? "Public" : "Private"}
+              </span>
             </div>
           </div>
-        ))
-      )}
-    </div>
+
+          <div className="p-4">
+            <h4 className="truncate text-sm font-bold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+              {pl.title}
+            </h4>
+            <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
+              <Clock className="h-3 w-3" />
+              <span>Updated recently</span>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </motion.div>
   )
 }
 
-// ---------- Page ----------
+// ---------- Main Page Component ----------
+type ContentTab = "videos" | "playlists"
+
 export const StudioContentPage = () => {
-  const [activeTab, setActiveTab] = useState<"videos" | "playlists">("videos")
+  const [activeTab, setActiveTab] = useState<ContentTab>("videos")
   const [query, setQuery] = useState("")
-  const [status, setStatus] = useState<StatusFilter>("all")
-  const [sort, setSort] = useState<SortOption>("date-desc")
+  const debouncedQuery = useDebouncedValue(query, 350)
+  const [status, setStatus] = useState<StatusFilter>("ALL")
+  const [sort, setSort] = useState<SortOption>("NEWEST")
+
   const navigate = useNavigate()
-  // Fetch stats using a large limit to get overall totals
+  const { deleteVideo } = useVideo()
+
   const { data: statsData } = useQuery({
     queryKey: ["owner-channel-stats"],
-    queryFn: () => fetchOwnerVideosChannel({ page: 1, limit: 1000 }),
+    queryFn: () => fetchOwnerVideosChannel({ page: 1, limit: 10 }),
   })
 
   const stats = useMemo(() => {
@@ -602,119 +643,136 @@ export const StudioContentPage = () => {
   }, [statsData])
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-8 dark:bg-slate-950">
       <div className="mx-auto max-w-7xl space-y-8">
-        {/* Header */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span className="hover:text-slate-700 cursor-pointer transition-colors">
-              Studio
-            </span>
-            <span className="text-slate-300">/</span>
-            <span className="font-medium text-indigo-600">Content</span>
+        {/* Header Title Section */}
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+              <span>Studio</span>
+              <span>/</span>
+              <span>Content</span>
+            </div>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+              Channel Content
+            </h1>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+              Manage your video library, check upload statuses, and organize
+              playlists.
+            </p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Channel content
-          </h1>
-          <p className="text-slate-500">
-            Manage your videos, track performance, and organize playlists.
-          </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Overview Stats Cards */}
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
           <StudioContentCard
-            title="Total videos"
+            title="Total Videos"
             number={stats?.totalVideos ?? 0}
-            description={`${stats?.draft ?? 0} drafts remaining`}
+            description={`${stats?.draft ?? 0} unpublished drafts`}
             Icon={VideoIcon}
-            accent="blue"
-            trend={{ value: "+12%", isPositive: true }}
+            trend={{ value: "+8%", isPositive: true }}
           />
           <StudioContentCard
-            title="Total views"
+            title="Total Views"
             number={stats?.totalViews ?? 0}
-            description="Across all published videos"
+            description="Accumulated lifetime views"
             Icon={Eye}
-            accent="emerald"
-            trend={{ value: "+5.2%", isPositive: true }}
+            trend={{ value: "+14.2%", isPositive: true }}
           />
           <StudioContentCard
             title="Published"
             number={stats?.published ?? 0}
             spanWord="videos"
-            description="Live on your channel"
+            description="Live on channel"
             Icon={TrendingUp}
-            accent="purple"
           />
           <StudioContentCard
             title="Drafts"
             number={stats?.draft ?? 0}
             spanWord="videos"
-            description="Awaiting publish"
+            description="Pending details / upload"
             Icon={Clock}
-            accent="amber"
           />
+        </motion.div>
+
+        {/* Tab Switcher */}
+        <div className="flex gap-1 rounded-xl border border-slate-200/80 bg-slate-100/80 p-1 w-fit dark:border-slate-800 dark:bg-slate-900">
+          {(
+            [
+              { id: "videos", label: "Videos", Icon: VideoIcon },
+              { id: "playlists", label: "Playlists", Icon: Film },
+            ] as const
+          ).map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`relative flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+                activeTab === id
+                  ? "text-slate-900 dark:text-white"
+                  : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+              }`}
+            >
+              {activeTab === id && (
+                <motion.div
+                  layoutId="active-content-tab"
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                  className="absolute inset-0 rounded-lg bg-white shadow-sm dark:bg-slate-800"
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-2">
+                <Icon className="h-4 w-4" />
+                {label}
+              </span>
+            </button>
+          ))}
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 rounded-xl bg-slate-100 p-1 w-fit">
-          <button
-            onClick={() => setActiveTab("videos")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              activeTab === "videos"
-                ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/60"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <VideoIcon className="h-4 w-4" />
-              Videos
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab("playlists")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              activeTab === "playlists"
-                ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/60"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Film className="h-4 w-4" />
-              Playlists
-            </div>
-          </button>
-        </div>
+        {/* Tab View Transition */}
+        <AnimatePresence mode="wait">
+          {activeTab === "videos" ? (
+            <motion.div
+              key="videos"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-4"
+            >
+              <ContentToolbar
+                query={query}
+                onQueryChange={setQuery}
+                status={status}
+                onStatusChange={setStatus}
+                sort={sort}
+                onSortChange={setSort}
+                totalCount={stats?.totalVideos ?? 0}
+              />
 
-        {/* Tab Content */}
-        {activeTab === "videos" && (
-          <div className="space-y-4">
-            <ContentToolbar
-              query={query}
-              onQueryChange={setQuery}
-              status={status}
-              onStatusChange={setStatus}
-              sort={sort}
-              onSortChange={setSort}
-              totalCount={stats?.totalVideos ?? 0}
-            />
-            <VideosTable
-              query={query}
-              status={status}
-              sort={sort}
-              onEdit={(id) => {
-                console.log("edit", id)
-                navigate(`/studio/content/${id}/edit`)
-              }}
-              onDelete={(id) => console.log("delete", id)}
-            />
-          </div>
-        )}
-
-        {activeTab === "playlists" && (
-          <PlaylistsGrid playlists={MOCK_PLAYLISTS} />
-        )}
+              <VideosTable
+                query={debouncedQuery}
+                status={status}
+                sort={sort}
+                onEdit={(id) => navigate(`/studio/content/${id}/edit`)}
+                onDelete={(id) => deleteVideo(id)}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="playlists"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              <PlaylistsGrid playlists={MOCK_PLAYLISTS} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

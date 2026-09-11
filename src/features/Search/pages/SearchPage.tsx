@@ -19,7 +19,7 @@ import { searchVideos } from "../../../lib/search"
 import type { SearchResponse, SearchVideoItem } from "../../../lib/search"
 import { Button } from "../../../components/ui/button"
 import { cn } from "../../../lib/utils"
-import { formatDuration, formatNumber } from "../../../lib/helpers"
+import { formatDurationInSeconds, formatNumber } from "../../../lib/helpers"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { useAuth } from "../../Auth/hooks/useAuth"
@@ -29,6 +29,7 @@ import { PlaylistIcon } from "@vidstack/react/icons"
 import { createPortal } from "react-dom"
 import { CreatePlaylistModal } from "../../../components/CreatePlaylistModal"
 import { SaveDropdown } from "../../../components/features/SaveDropdown"
+import axiosInstance from "../../../lib/api"
 
 dayjs.extend(relativeTime)
 
@@ -193,17 +194,8 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   )
 }
 
-function SearchVideoDropdown({
-  onClose,
-  videoId,
-  onOpenCreateModal,
-}: {
-  open: boolean
-  onClose: () => void
-  videoId: string
-  onOpenCreateModal: (open: boolean) => void
-}) {
-  const { user } = useAuth()
+function SearchVideoDropdown({ videoId }: { videoId: string }) {
+  const user = useAuth((state) => state.user)
   const [openPlaylistDropdown, setOpenPlaylistDropdown] = useState(false)
 
   return (
@@ -214,7 +206,6 @@ function SearchVideoDropdown({
         className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:bg-accent focus:outline-none"
         onClick={() => {
           toast.info("Added to Watch Later")
-          onClose()
         }}
       >
         <Clock className="h-4 w-4 text-muted-foreground" />
@@ -241,10 +232,6 @@ function SearchVideoDropdown({
           videoId={videoId}
           isOpen={openPlaylistDropdown}
           onClose={() => setOpenPlaylistDropdown(false)}
-          onOpenCreateModal={() => {
-            onOpenCreateModal(true)
-            setOpenPlaylistDropdown(false) // Close submenu when opening modal
-          }}
         />
       </div>
 
@@ -253,7 +240,6 @@ function SearchVideoDropdown({
         className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:bg-accent focus:outline-none"
         onClick={() => {
           toast.info("Share feature coming soon")
-          onClose()
         }}
       >
         <Share2 className="h-4 w-4 text-muted-foreground" />
@@ -268,7 +254,6 @@ function SearchVideoDropdown({
         className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus:bg-destructive/10 focus:outline-none"
         onClick={() => {
           toast.info("Report feature coming soon")
-          onClose()
         }}
       >
         <Flag className="h-4 w-4" />
@@ -281,11 +266,9 @@ function SearchVideoDropdown({
 function SearchVideoCard({
   video,
   hoverColoring,
-  onRequestCreatePlaylist,
 }: {
   video: SearchVideoItem
   hoverColoring: string
-  onRequestCreatePlaylist: () => void
 }) {
   const [openSearchVideoDropdown, setOpenSearchVideoDropdown] = useState(false)
 
@@ -341,9 +324,9 @@ function SearchVideoCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
         {/* Duration badge */}
-        {video.duration > 0 && (
+        {video.durationSeconds > 0 && (
           <span className="absolute bottom-2 right-2 rounded-md bg-black/80 px-2 py-1 text-xs font-bold text-white backdrop-blur-sm">
-            {formatDuration(video.duration)}
+            {formatDurationInSeconds(video.durationSeconds)}
           </span>
         )}
       </div>
@@ -389,12 +372,7 @@ function SearchVideoCard({
                   role="menu"
                   className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-background shadow-xl z-20  animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200 origin-top-right"
                 >
-                  <SearchVideoDropdown
-                    open={openSearchVideoDropdown}
-                    onClose={() => setOpenSearchVideoDropdown(false)}
-                    videoId={video.videoId}
-                    onOpenCreateModal={onRequestCreatePlaylist}
-                  />
+                  <SearchVideoDropdown videoId={video.videoId} />
                 </div>
               </>
             )}
@@ -440,21 +418,33 @@ function SearchVideoCard({
 export const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
+  const selectedCategory = searchParams.get("category") ?? ""
   const query = searchParams.get("q") ?? ""
   const page = getSafePage(searchParams.get("page"))
-
-  const [openAddPlaylistModal, setOpenAddPlaylistModal] = useState(false)
 
   const lastQueryRef = useRef(query)
 
   const { data, isPending, isError, isFetching, refetch } =
     useQuery<SearchResponse>({
-      queryKey: ["videos", "search", query, page],
-      queryFn: ({ signal }) => searchVideos(query, page, PAGE_SIZE, signal),
+      queryKey: ["videos", "search", query, page, selectedCategory],
+      queryFn: ({ signal }) =>
+        searchVideos(query, page, PAGE_SIZE, selectedCategory, signal),
       enabled: query.trim().length > 0,
       placeholderData: keepPreviousData,
       staleTime: 30_000,
     })
+  const { data: categories } = useQuery({
+    queryKey: ["videos", "categories"],
+    queryFn: async () => {
+      const response = await axiosInstance.get<
+        {
+          id: string
+          name: string
+        }[]
+      >("/api/v1/categories")
+      return response.data
+    },
+  })
 
   useEffect(() => {
     document.title = query ? `${query} - Search` : "Search"
@@ -485,10 +475,24 @@ export const SearchPage = () => {
   const currentPageSize = data?.pageSize || PAGE_SIZE
 
   const hasPrevPage = page > 1
-  const hasNextPage = items.length >= currentPageSize && items.length > 0
+  const hasNextPage = data?.hasNextPage ?? false
 
   const showResults = query.trim().length > 0
   const showPagination = showResults && items.length > 0
+
+  const handleCategoryChange = (categoryName: string | null) => {
+    const nextParams = new URLSearchParams(searchParams)
+
+    nextParams.delete("page")
+
+    if (categoryName) {
+      nextParams.set("category", categoryName)
+    } else {
+      nextParams.delete("category")
+    }
+
+    setSearchParams(nextParams)
+  }
 
   return (
     <div className="relative min-h-screen w-full bg-background">
@@ -501,6 +505,46 @@ export const SearchPage = () => {
         <header className="mb-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="min-w-0 space-y-3">
+              <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 py-2 sm:mx-0 sm:px-0">
+                {/* زر الكل (All) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCategoryChange(null)
+                  }}
+                  className={cn(
+                    "shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-200",
+                    !selectedCategory
+                      ? "bg-foreground text-background shadow-sm"
+                      : "bg-muted/80 text-foreground/80 hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  All
+                </button>
+
+                {/* بقية التصنيفات */}
+                {categories?.map((category) => {
+                  const isSelected = selectedCategory === category.name
+
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        handleCategoryChange(category.name)
+                      }}
+                      className={cn(
+                        "shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-200",
+                        isSelected
+                          ? "bg-foreground text-background shadow-sm"
+                          : "bg-muted/80 text-foreground/80 hover:bg-muted hover:text-foreground active:scale-95"
+                      )}
+                    >
+                      {category.name}
+                    </button>
+                  )
+                })}
+              </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 {isFetching && !isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -588,9 +632,6 @@ export const SearchPage = () => {
                     hoverColoring={
                       HOVER_COLORING[index % HOVER_COLORING.length]
                     }
-                    onRequestCreatePlaylist={() =>
-                      setOpenAddPlaylistModal(true)
-                    }
                   />
                 </li>
               ))}
@@ -610,13 +651,7 @@ export const SearchPage = () => {
           </>
         )}
       </div>
-      {createPortal(
-        <CreatePlaylistModal
-          open={openAddPlaylistModal}
-          onClose={() => setOpenAddPlaylistModal(false)}
-        />,
-        document.body
-      )}
+      {createPortal(<CreatePlaylistModal />, document.body)}
     </div>
   )
 }

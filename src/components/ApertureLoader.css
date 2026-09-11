@@ -1,0 +1,51 @@
+.aperture-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.aperture-blade {
+  transform-origin: 100px 100px;
+  fill: var(--accent);
+  animation: aperture-breathe 2.2s ease-in-out infinite;
+}
+
+.aperture-blade:nth-child(even) {
+  fill: var(--accent-hover);
+}
+
+@keyframes aperture-breathe {
+  0%,
+  100% {
+    transform: rotate(var(--angle, 0deg)) scale(0.55);
+    opacity: 0.6;
+  }
+  50% {
+    transform: rotate(calc(var(--angle, 0deg) + 35deg)) scale(1);
+    opacity: 1;
+  }
+}
+
+.aperture-core {
+  fill: var(--foreground);
+  animation: core-fade 2.2s ease-in-out infinite;
+}
+
+@keyframes core-fade {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}

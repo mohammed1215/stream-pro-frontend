@@ -271,13 +271,7 @@ export const PlaylistsPage = () => {
         <EmptyPlaylistsState />
       )}
 
-      <CreatePlaylistModal
-        open={isPlaylistModalOpened}
-        onClose={() => {
-          setIsPlaylistModalOpened(false)
-          queryClient.invalidateQueries({ queryKey: ["playlists"] })
-        }}
-      />
+      <CreatePlaylistModal />
     </div>
   )
 }

@@ -7,10 +7,16 @@ import {
   removeVideoFromPlaylist,
   type Playlist,
 } from "../../lib/playlists"
+import {
+  addToWatchLater,
+  removeFromWatchLater,
+  getWatchLaterStatus,
+} from "../../lib/watchlater"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { PlaylistIcon } from "@vidstack/react/icons"
 import { GhostButton } from "../GhostButton"
 import { cn } from "../../lib/utils"
+import { usePlaylistModal } from "../../hooks/usePlaylistModal"
 
 export function DropdownWrapper({
   isOpen,
@@ -94,22 +100,108 @@ function PlaylistItem({
   )
 }
 
+function WatchLaterItem({
+  videoId,
+  onClose,
+}: {
+  videoId: string
+  onClose: () => void
+}) {
+  const queryClient = useQueryClient()
+
+  // Query key is scoped per videoId - without this every WatchLaterItem
+  // instance on the page would share one cache entry and show the wrong
+  // saved-state for other videos.
+  const statusQueryKey = ["watch-later-status", videoId]
+
+  const { data, isPending: isLoadingStatus } = useQuery({
+    queryKey: statusQueryKey,
+    queryFn: () => getWatchLaterStatus(videoId),
+  })
+  const isInWatchLater = data?.isInWatchLater ?? false
+
+  const invalidateStatus = () => {
+    queryClient.invalidateQueries({ queryKey: statusQueryKey })
+    queryClient.invalidateQueries({ queryKey: ["watch-later"] })
+  }
+
+  const { mutate: saveToWatchLater, isPending: isSaving } = useMutation({
+    mutationFn: () => addToWatchLater(videoId),
+    onSuccess: () => {
+      toast.success("Added to Watch Later", { position: "top-center" })
+      invalidateStatus()
+      onClose()
+    },
+    onError: () => toast.error("Failed to add to Watch Later"),
+  })
+
+  const { mutate: unsaveFromWatchLater, isPending: isUnsaving } = useMutation({
+    mutationFn: () => removeFromWatchLater(videoId),
+    onSuccess: () => {
+      toast.success("Removed from Watch Later", { position: "top-center" })
+      invalidateStatus()
+      onClose()
+    },
+    onError: () => toast.error("Failed to remove from Watch Later"),
+  })
+
+  const isBusy = isSaving || isUnsaving || isLoadingStatus
+
+  return (
+    <button
+      type="button"
+      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors text-left disabled:opacity-50"
+      onClick={() => {
+        if (isInWatchLater) {
+          unsaveFromWatchLater()
+        } else {
+          saveToWatchLater()
+        }
+      }}
+      disabled={isBusy}
+    >
+      <div
+        className={cn(
+          "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border transition-colors",
+          isInWatchLater
+            ? "bg-primary/10 border-primary/20 text-primary"
+            : "bg-muted border-border text-muted-foreground"
+        )}
+      >
+        {isInWatchLater ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <Save className="h-4 w-4" />
+        )}
+      </div>
+      <span className="text-sm font-medium truncate flex-1 text-foreground">
+        Watch Later
+      </span>
+      {isInWatchLater && !isBusy && (
+        <span className="text-xs font-semibold text-primary">Saved</span>
+      )}
+      {isBusy && (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      )}
+    </button>
+  )
+}
+
 export function SaveDropdown({
   videoId,
   isOpen,
   onClose,
-  onOpenCreateModal,
 }: {
   videoId: string
   isOpen: boolean
   onClose: () => void
-  onOpenCreateModal: () => void
 }) {
-  const { user } = useAuth()
+  const user = useAuth((state) => state.user)
+  const openCreateModal = usePlaylistModal((s) => s.open)
   const { data: playlists, isPending: isLoadingPlaylists } = useQuery({
     queryKey: ["get-playlists", videoId],
     queryFn: () => (user && videoId ? getPlaylistsWithHasVideo(videoId) : null),
-    enabled: isOpen && !!user && !!videoId, // Only fetch when dropdown opens! (Great performance optimization)
+    enabled: isOpen && !!user && !!videoId,
   })
 
   return (
@@ -127,19 +219,7 @@ export function SaveDropdown({
           </div>
         ) : (
           <>
-            <button
-              type="button"
-              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors text-left"
-              onClick={() => {
-                toast.info("Added to Watch Later")
-                onClose()
-              }}
-            >
-              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0 border border-border">
-                <Save className="h-4 w-4 text-foreground" />
-              </div>
-              <span className="text-sm font-medium truncate">Watch Later</span>
-            </button>
+            <WatchLaterItem videoId={videoId} onClose={onClose} />
 
             {playlists?.map((playlist) => (
               <PlaylistItem
@@ -162,7 +242,7 @@ export function SaveDropdown({
         <GhostButton
           className="w-full justify-start gap-2"
           onClick={() => {
-            onOpenCreateModal()
+            openCreateModal()
             onClose()
           }}
         >

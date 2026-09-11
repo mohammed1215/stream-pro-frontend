@@ -1,9 +1,11 @@
+import axios from "axios"
 import axiosInstance from "./api"
 
 export interface VideoDetailResponse {
   videoId: string
   title: string
-  videoUrl: string
+  videoUrl: string | null
+  hlsUrl: string | null
   thumbnailUrl: string
   channelId: string
   channelTitle: string
@@ -30,6 +32,186 @@ export const videoDetails = async (videoId: string) => {
     console.log(error)
     throw error
   }
+}
+
+export const ownerVideoDetails = async (videoId: string) => {
+  try {
+    const video = (
+      await axiosInstance.get<VideoDetailResponse>(
+        `/api/v1/owner/videos/${videoId}`
+      )
+    ).data
+    return video
+  } catch (error) {
+    console.log(error)
+    throw error
+  }
+}
+
+export const createVideoApi = async ({
+  title,
+  description,
+
+  onUploadProgress,
+}: {
+  title: string
+  description: string
+
+  onUploadProgress?: (percent: number) => void
+}) => {
+  const res = await axiosInstance.postForm(
+    `/api/v1/owner/videos`,
+    {
+      title,
+      description,
+    },
+    {
+      onUploadProgress: (progressEvent) => {
+        console.log("Upload progress:", progressEvent.progress)
+        if (typeof progressEvent.progress === "number") {
+          onUploadProgress?.(Math.round(progressEvent.progress * 100))
+        }
+      },
+    }
+  )
+  return res.data
+}
+export interface VideoUploadSignature {
+  uploadUrl: string
+  apiKey: string
+  timestamp: number
+  signature: string
+  folder: string
+  eager?: string
+  eagerAsync?: boolean
+  eagerNotificationUrl?: string
+}
+
+export interface InitVideoResponse {
+  success: boolean
+  data: {
+    videoId: string
+    signatureVideoData: {
+      signature: string
+      timestamp: number
+      apiKey: string
+      folder: string
+      eager: string
+      eager_notification_url: string
+      eager_async: boolean
+      uploadUrl: string
+      public_id: string
+    }
+    signatureThumbnailData: {
+      timestamp: number
+      folder: string
+      public_id: string
+      transformation: string
+      signature: string
+      apiKey: string
+      uploadUrl: string
+    }
+  }
+}
+
+export const initiateVideoUploadApi = async (payload: {
+  title: string
+  description: string
+  tags: string[]
+  categoryId: string
+}): Promise<InitVideoResponse> => {
+  const res = await axiosInstance.post<InitVideoResponse>(
+    "/api/v1/owner/videos/initiate",
+    payload
+  )
+  return res.data
+}
+
+export const uploadVideoToCloudApi = async ({
+  uploadUrl,
+  formData,
+  onProgress,
+  signal,
+}: {
+  uploadUrl: string
+  formData: FormData
+  onProgress?: (percent: number) => void
+  signal?: AbortSignal
+}) => {
+  const res = await axios.post(uploadUrl, formData, {
+    signal,
+    onUploadProgress: (progressEvent) => {
+      if (progressEvent.total) {
+        const percent = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        )
+        onProgress?.(percent)
+      }
+    },
+  })
+  return res.data
+}
+export const uploadThumbnailToCloudApi = async ({
+  uploadUrl,
+  formData,
+  onProgress,
+  signal,
+}: {
+  uploadUrl: string
+  formData: FormData
+  onProgress?: (percent: number) => void
+  signal?: AbortSignal
+}) => {
+  const res = await axios.post(uploadUrl, formData, {
+    signal,
+    onUploadProgress: (progressEvent) => {
+      if (progressEvent.total) {
+        const percent = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        )
+        onProgress?.(percent)
+      }
+    },
+  })
+  return res.data
+}
+
+export const confirmUploadThumbnailApi = async (
+  videoId: string,
+  payload: {
+    publicId: string
+    version: number
+    signature: string
+    thumbnailUrl: string
+  }
+) => {
+  const res = await axiosInstance.post(
+    `/api/v1/owner/videos/${videoId}/thumbnail-upload-completed`,
+    payload
+  )
+  return res.data
+}
+
+export const confirmUploadVideoApi = async (
+  videoId: string,
+  payload: {
+    publicId: string
+    version: number
+    signature: string
+    duration: number
+    bytes: number
+  }
+) => {
+  const res = await axiosInstance.post(
+    `/api/v1/owner/videos/${videoId}/video-upload-completed`,
+    payload
+  )
+  return res.data
+}
+
+export const deleteVideo = async (videoId: string) => {
+  const res = await axiosInstance.delete(`/api/v1/owner/videos/${videoId}`)
+  return res.data
 }
 
 export const likeVideo = async (videoId: string) => {
@@ -61,7 +243,7 @@ export interface FetchOwnerVideosChannelResponse {
     channelId: string
     channelTitle: string
     channelImageUrl: string
-    duration: number
+    durationSeconds: number
     views: number
     isPublished: boolean
   }[]
@@ -77,24 +259,24 @@ export const fetchOwnerVideosChannel = async ({
   limit,
   query,
   status,
-  sort,
+  sortBy,
 }: {
   page: number
   limit: number
   query?: string
-  status?: string
-  sort?: string
+  status?: "ALL" | "PUBLISHED" | "UNPUBLISHED"
+  sortBy?: "NEWEST" | "OLDEST" | "MOST_VIEWED"
 }) => {
   try {
     const res = await axiosInstance.get<FetchOwnerVideosChannelResponse>(
-      `/api/v1/owner/channel/videos`,
+      `/api/v1/owner/videos`,
       {
         params: {
           page,
           limit,
           ...(query && { query }),
-          ...(status !== "all" && { status }),
-          ...(sort && { sort }),
+          ...(status !== "ALL" && { status }),
+          ...(sortBy && { sortBy }),
         },
       }
     )
@@ -129,7 +311,35 @@ export const updateVideoDetails = async (
   return res.data
 }
 
-export const updateVideoThumbnail = async (
+export const getVideoThumbnailSignatureApi = async (videoId: string) => {
+  const res = await axiosInstance.patch<{
+    timestamp: number
+    folder: string
+    public_id: string
+    transformation: string
+    signature: string
+    apiKey: string
+    uploadUrl: string
+  }>(`/api/v1/owner/videos/${videoId}/thumbnail/signature`)
+  return res.data
+}
+
+export const getVideoMediaSignatureApi = async (videoId: string) => {
+  const res = await axiosInstance.patch<{
+    signature: string
+    timestamp: number
+    apiKey: string
+    folder: string
+    eager: string
+    eager_notification_url: string
+    eager_async: boolean
+    uploadUrl: string
+    public_id: string
+  }>(`/api/v1/owner/videos/${videoId}/media/signature`)
+  return res.data
+}
+
+export const updateVideoThumbnailApi = async (
   videoId: string,
   thumbnailFile: File
 ) => {
@@ -149,7 +359,6 @@ export const updateVideoThumbnail = async (
 
 export const uploadVideoMedia = async (videoId: string, videoFile: File) => {
   const videoMediaFormData = new FormData()
-  debugger
   videoMediaFormData.append("video", videoFile)
   const res = await axiosInstance.patch(
     `/api/v1/owner/videos/${videoId}/media`,
@@ -159,6 +368,29 @@ export const uploadVideoMedia = async (videoId: string, videoFile: File) => {
         "Content-Type": "multipart/form-data",
       },
     }
+  )
+  return res.data
+}
+
+export const recordViewApi = async (videoId: string) => {
+  const res = await axiosInstance.post(`/api/v1/videos/${videoId}/views`)
+  return res.data
+}
+export interface VideoResponseDto {
+  videoId: string
+  title: string
+  videoUrl: string | null
+  hlsUrl: string | null
+  thumbnailUrl: string | null
+  channelId: string
+  channelTitle: string
+  channelImageUrl: string | null
+  durationSeconds: number
+  views: number
+}
+export const fetchRelatedVideosApi = async (videoId: string) => {
+  const res = await axiosInstance.get<VideoResponseDto[]>(
+    `/api/v1/videos/${videoId}/related`
   )
   return res.data
 }

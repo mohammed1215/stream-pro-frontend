@@ -97,9 +97,31 @@ export const fetchChannelPlaylists = async (
   return res.data
 }
 
+type videoType = {
+  videoId: string
+  videoTitle: string
+  videoDescription: string
+  videoUrl: string
+  thumbnailUrl: string
+  views: number
+  createdAt: string
+  updatedAt: string
+  isLikedByUser: boolean
+  isInWatchLater: boolean
+}
+type playlistType = {
+  id: string
+  title: string
+  description: string
+  createdAt: string
+  updatedAt: string
+  isPublic: boolean
+  videosCount: number
+}
+
 export interface FetchChannelHomeResponse {
-  videos: FetchChannelVideosResponse["items"]
-  playlists: FetchChannelPlaylistsResponse["items"]
+  videos: videoType[]
+  playlists: playlistType[]
 }
 
 export const fetchChannelHome = async (

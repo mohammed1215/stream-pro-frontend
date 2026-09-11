@@ -16,7 +16,7 @@ import { getFcmToken } from "../../../config/firebase"
 import { getDeviceId } from "../../../lib/helpers"
 
 const LoginForm = () => {
-  const { login } = useAuth()
+  const login = useAuth((state) => state.login)
 
   const [formData, setFormData] = useState<LoginPayload>({
     email: "",

@@ -16,6 +16,9 @@ import { WatchLaterPage } from "./pages/WatchLaterPage"
 import { PlaylistsPage } from "./pages/PlaylistsPage"
 import { PlaylistPage } from "./pages/PlaylistPage"
 import { LikedVideosPage } from "./pages/LikedVideosPage"
+import { SubscriptionsPage } from "./pages/SubscriptionsPage"
+import { SessionsPage } from "./pages/SessionsPage"
+import { ProfilePage } from "./pages/ProfilePage"
 
 export const router = createBrowserRouter([
   {
@@ -46,7 +49,7 @@ export const router = createBrowserRouter([
 
           {
             path: "feed/subscriptions",
-            element: <div>Subscriptions Feed</div>,
+            element: <SubscriptionsPage />,
           },
           { path: "feed/liked", element: <LikedVideosPage /> },
           { path: "feed/watchlater", element: <WatchLaterPage /> },
@@ -62,7 +65,8 @@ export const router = createBrowserRouter([
 
           { path: "videos/:videoId", element: <VideoPage /> },
           { path: "channels/:channelId", element: <ChannelDetailsPage /> },
-          { path: "profile", element: <div>Profile Page</div> },
+          { path: "sessions", element: <SessionsPage /> },
+          { path: "profile", element: <ProfilePage /> },
           { path: "settings", element: <div>Settings Page</div> },
         ],
       },

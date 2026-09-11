@@ -1,6 +1,6 @@
 import { ImageOff } from "lucide-react"
 import type { VideoResponse } from "../lib/search"
-import { formatDuration } from "../lib/helpers"
+import { formatDurationInSeconds } from "../lib/helpers"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { ChannelAvatar } from "./ChannelAvatar"
@@ -26,7 +26,7 @@ export const VideoCard = ({ video }: { video: VideoResponse }) => {
           </div>
         )}
         <span className="absolute bottom-0 right-0 bg-accent text-accent-foreground text-xs font-medium px-2 py-1 rounded-tl-lg">
-          {formatDuration(video.duration)}
+          {formatDurationInSeconds(video.durationSeconds)}
         </span>
       </div>
       <div className="p-5 flex items-center gap-3 mb-4">

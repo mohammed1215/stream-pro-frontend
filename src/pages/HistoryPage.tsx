@@ -1,13 +1,13 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { getHistory, type WatchHistoryItem } from "../lib/watchHistory"
-import { formatDuration, mergeGroupedHistory } from "../lib/helpers"
+import { formatDurationInSeconds, mergeGroupedHistory } from "../lib/helpers"
 import { History, Play, Clock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useRef } from "react"
 
 const HistoryCard = ({ item }: { item: WatchHistoryItem }) => {
-  const progress = item.video.duration
-    ? Math.min((item.watchedSeconds / (item.videoDuration / 1000)) * 100, 100)
+  const progress = item.video.durationSeconds
+    ? Math.min((item.watchedSeconds / item.videoDuration) * 100, 100)
     : 0
 
   const navigate = useNavigate()
@@ -81,12 +81,12 @@ const HistoryCard = ({ item }: { item: WatchHistoryItem }) => {
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
           <div className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
-            <span>{formatDuration(item.watchedSeconds * 1000)} watched</span>
+            <span>{formatDurationInSeconds(item.watchedSeconds)} watched</span>
           </div>
-          {item.video.duration && (
+          {item.video.durationSeconds && (
             <>
               <span className="text-border">•</span>
-              <span>{formatDuration(item.videoDuration)} total</span>
+              <span>{formatDurationInSeconds(item.videoDuration)} total</span>
             </>
           )}
         </div>

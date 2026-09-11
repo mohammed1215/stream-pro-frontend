@@ -1,306 +1,671 @@
-.channel-details {
-  padding: 1rem;
+.channel-page-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-bottom: 4rem;
+  color: var(--foreground);
 }
 
-img.channel-avatar {
-  width: 6rem;
-  height: 6rem;
-  border-radius: 50%;
-  border: 4px solid var(--border);
-  position: absolute;
-  bottom: 0%;
-  left: 50%;
-  transform: translateX(-50%) translateY(50%);
-}
-
-img.channel-thumbnail {
+/* --- Banner Header --- */
+.channel-banner-container {
   width: 100%;
-  height: 16rem;
-  border-radius: 0.5rem;
+  height: clamp(140px, 20vw, 260px);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-color: var(--muted);
+  position: relative;
+}
+
+.channel-banner-img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
-.channel-info {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-}
-
-h1.channel-title {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.channel-description {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.channel-stats-container {
-  display: flex;
-  justify-content: center;
-  gap: 0.25rem;
-}
-
-.channel-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.channel-stats-value {
-  font-weight: bold;
-  color: var(--text-foreground);
-}
-
-.channel-buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.channel-buttons button {
-  padding: 0.5rem 1rem;
-  border-radius: 20rem;
-  background-color: var(--background-secondary);
-  font-size: 0.875rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, transform 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid var(--border);
-}
-
-.channel-buttons button:hover {
-  background-color: var(--background-secondary-hover);
-  color: var(--text-foreground);
-  transform: scale(1.05);
-}
-.channel-buttons button:active {
-  transform: scale(0.95);
-}
-
-.subscribed-button {
-  background-color: var(--background-secondary) !important;
-  color: var(--text-foreground) !important;
-}
-
-.channel-tabs {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.channel-tab {
-  padding: 0.5rem 1rem;
-  background-color: var(--background-secondary);
-  font-size: 0.875rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, transform 0.2s;
-  position: relative;
-}
-
-.channel-tab::before {
-  content: "";
-  display: block;
-  position: absolute;
-  bottom: 0;
-  left: 0;
+.channel-banner-placeholder {
   width: 100%;
-  height: 5px;
-  background-color: transparent;
-  border-radius: 5px 5px 0 0;
+  height: 100%;
+  background: linear-gradient(135deg, var(--muted) 0%, var(--border) 100%);
 }
 
-.channel-tab:hover {
-  background-color: var(--background-secondary-hover);
+/* --- Header Info Row --- */
+.channel-header-container {
+  padding: 1.5rem 1rem 1rem 1rem;
+}
+
+.channel-header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .channel-header-content {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    gap: 2rem;
+  }
+}
+
+.channel-avatar-wrapper {
+  flex-shrink: 0;
+}
+
+.channel-avatar-img {
+  width: clamp(5.5rem, 10vw, 8.5rem);
+  height: clamp(5.5rem, 10vw, 8.5rem);
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--background);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.channel-main-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex-grow: 1;
+}
+
+.channel-main-title {
+  font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.channel-quick-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 768px) {
+  .channel-quick-stats {
+    justify-content: flex-start;
+  }
+}
+
+.dot-divider {
+  opacity: 0.6;
+}
+
+.channel-desc-box {
+  max-width: 720px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.desc-toggle-btn {
+  background: none;
+  border: none;
+  padding: 0 0.25rem;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- Action Buttons --- */
+/* Note: enter/hover/tap motion now handled by Framer Motion (whileHover/whileTap)
+   in the component. Keep only static layout + color here. */
+.channel-actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .channel-actions-group {
+    justify-content: flex-start;
+  }
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  /* Only transition color/background here — scale/translate is Framer Motion's job now */
+  transition: background-color 0.2s ease, color 0.2s ease;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: #020617;
+  font-weight: 700;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background-color: var(--background-secondary);
   color: var(--text-foreground);
-  transform: scale(1.05);
-}
-.channel-tab.active::before {
-  border-bottom: 5px solid var(--accent);
+  border-color: var(--border);
 }
 
-.channel-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
+.btn-secondary:hover {
+  background-color: var(--background-secondary-hover);
+}
+
+.btn-subscribe {
+  background-color: var(--destructive);
+  color: #ffffff;
+}
+
+.btn-subscribe:hover {
+  filter: brightness(0.9);
+}
+
+.btn-subscribed {
+  background-color: var(--background-secondary);
+  color: var(--text-foreground);
+  border-color: var(--border);
+}
+
+.btn-subscribed:hover {
+  background-color: var(--background-secondary-hover);
+}
+
+/* --- Navigation Tabs --- */
+.channel-tabs-bar {
+  border-bottom: 1px solid var(--border);
   margin-top: 1rem;
 }
 
-.channel-item {
+.tabs-container {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  cursor: pointer;
-  border-radius: 1.325rem;
-  box-shadow: 0px 4px 1.1rem 0rem #00000061;
+  gap: 2rem;
+  overflow-x: auto;
+  padding: 0 1rem;
 }
 
-.channel-video-thumbnail-container,
-.channel-playlist-thumbnail-container {
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 0.75rem 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
   position: relative;
-  border-radius: 1.325rem;
-  overflow: hidden;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--text-foreground);
+}
+
+.tab-btn.active {
+  color: var(--text-foreground);
+}
+
+/* The underline itself is now a motion.div with layoutId="tab-underline"
+   rendered inside the active tab — Framer Motion slides it between tabs
+   automatically. This class only styles its appearance. */
+.tab-underline {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--accent);
+  border-radius: 3px 3px 0 0;
+}
+
+/* --- Tab Body & Grids --- */
+.channel-body-content {
+  padding: 1.5rem 1rem;
+}
+
+.channel-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+/* --- Channel Video & Playlist Cards ---
+   Enter/exit/stagger animation is now handled by Framer Motion
+   (cardItemVariants + gridContainerVariants in the component).
+   This file only keeps static appearance + the CSS-only hue trick,
+   since that's cheap, GPU-friendly, and doesn't depend on React state. */
+.channel-card {
+  --card-hue: calc(var(--card-index, 0) * 45deg);
+  --card-accent-color: hsl(var(--card-hue), 85%, 60%);
+  --card-glow-color: hsla(var(--card-hue), 85%, 60%, 0.18);
+  --card-border-color: hsla(var(--card-hue), 85%, 60%, 0.35);
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.65rem;
+  cursor: pointer;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background-color: transparent;
+  position: relative;
+  z-index: 1;
+  transition: background-color 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.channel-card:hover {
+  background-color: var(--card-glow-color);
+  border-color: var(--card-border-color);
+  box-shadow: 0 10px 24px -4px var(--card-glow-color),
+    0 4px 8px -2px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.card-thumbnail-wrapper {
+  position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background-color: #00000053;
+  border-radius: calc(var(--radius) - 2px);
+  overflow: hidden;
+  background-color: var(--muted);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.25s ease;
 }
 
-.channel-video-play-icon-container {
-  background-color: #000000ad;
-  top: 50%;
-  left: 50%;
-  border: 2px solid var(--border);
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  border-radius: 50%;
+.channel-card:hover .card-thumbnail-wrapper {
+  box-shadow: 0 0 0 1px var(--card-border-color);
 }
 
-.channel-video-play-icon-container,
-.channel-playlist-thumbnail {
-  position: absolute;
-
-  padding: 10px;
-
-  transition: all 0.2s;
-  color: hsl(0, 0%, 100%);
-}
-
-img.channel-video-thumbnail {
+.card-thumbnail-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.2s;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
 }
 
-.channel-video-item:hover img.channel-video-thumbnail {
-  transform: scale(1.1);
+.channel-card:hover .card-thumbnail-img {
+  transform: scale(1.06);
+  filter: brightness(0.92);
 }
 
-.channel-video-backdrop,
-.channel-playlist-backdrop {
-  opacity: 0;
+.channel-card:has(.card-menu-btn.active),
+.channel-card:has(.video-dropdown-menu) {
+  z-index: 50;
+}
+
+.card-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.5) 100%
-  );
-  transition: all 0.2s;
-}
-
-.channel-video-item:hover .channel-video-backdrop,
-.channel-playlist-item:hover .channel-playlist-backdrop {
-  opacity: 1;
-}
-
-.channel-video-item:hover .channel-video-play-icon-container {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
-.channel-playlist-item:hover .channel-playlist-thumbnail {
-  transform: scale(1.1);
-}
-
-.channel-video-stats,
-.channel-playlist-stats {
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  gap: 0.25rem;
-}
-
-.channel-video-stat,
-.channel-playlist-stat {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.channel-playlist-info,
-.channel-video-info {
-  padding: clamp(1rem, 1vw, 2.5rem);
-}
-
-.channel-video-title,
-.channel-playlist-title {
-  font-weight: bold;
-  font-size: 1.3rem;
-}
-
-.channel-video-description,
-.channel-playlist-description {
-  color: var(--text-secondary);
-}
-.channel-playlist-thumbnail {
-  width: 100%;
-  height: 100%;
-  display: flex;
   justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.play-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--card-accent-color);
+  color: #020617;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px var(--card-glow-color);
+}
+
+.channel-card:hover .card-overlay {
+  opacity: 1;
+}
+
+.playlist-thumbnail-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--muted);
+  transition: transform 0.35s ease;
+}
+
+.channel-card:hover .playlist-thumbnail-fallback {
+  transform: scale(1.06);
+}
+
+.playlist-count-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.2s ease;
+}
+
+.channel-card:hover .playlist-count-badge {
+  transform: translateY(-2px);
+}
+
+.card-content {
+  display: flex;
   flex-direction: column;
-}
-.channel-playlist-thumbnail-icon-container {
-}
-
-/* Primary owner action: styled with your system accent */
-/* Owner & Action Buttons */
-.customize-button {
-  background-color: var(--accent) !important;
-  color: #020617 !important;
-  font-weight: 600 !important;
-  border: 1px solid var(--accent) !important;
+  gap: 0.35rem;
 }
 
-.customize-button:hover {
-  background-color: var(--accent-hover) !important;
-  color: #ffffff !important;
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-foreground);
+  transition: color 0.2s ease;
 }
 
-.manage-button {
-  background-color: var(--background-secondary) !important;
-  color: var(--text-foreground) !important;
-  border: 1px solid var(--border) !important;
+.channel-card:hover .card-title {
+  color: var(--card-accent-color);
 }
 
-.manage-button:hover {
-  background-color: var(--background-secondary-hover) !important;
-  border-color: var(--border) !important;
+.card-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.subscribe-button {
-  background-color: #ef4444 !important; /* Red 500 */
-  color: #ffffff !important;
-  border-color: #ef4444 !important;
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
-.subscribed-button {
-  background-color: var(--background-secondary) !important;
-  color: var(--text-foreground) !important;
-  border: 1px solid var(--border) !important;
+/* --- Quick Actions & Card Badges --- */
+.card-top-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
 }
 
-.subscribed-button:hover {
-  background-color: var(--background-secondary-hover) !important;
+.card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+}
+
+.liked-badge {
+  background: rgba(239, 68, 68, 0.85);
+  color: #ffffff;
+}
+
+.quick-action-btn {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border);
+  color: #ffffff;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.channel-card:hover .quick-action-btn {
+  opacity: 1;
+}
+
+.quick-action-btn:hover {
+  background: var(--accent);
+  color: #020617;
+}
+
+.quick-action-btn.active {
+  opacity: 1;
+  background: var(--accent);
+  color: #020617;
+}
+
+/* Card Header & Title Row */
+.card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.card-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 2px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.channel-card:hover .card-menu-btn {
+  opacity: 1;
+}
+
+.card-menu-btn:hover {
+  color: var(--text-foreground);
+}
+
+/* Playlist Visibility */
+.playlist-visibility-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* --- About Tab --- */
+.channel-about-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .channel-about-container {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.about-details-card,
+.about-stats-card {
+  background-color: var(--background-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.about-details-card h3,
+.about-stats-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.about-full-description {
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.about-stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.about-stat-item:last-child {
+  border-bottom: none;
+}
+
+.about-stat-item span:last-child {
+  font-weight: 600;
+  color: var(--text-foreground);
+}
+
+/* --- States: Loading & Empty --- */
+.channel-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  color: var(--text-secondary);
+  gap: 1rem;
+}
+
+.empty-icon {
+  opacity: 0.4;
+}
+
+.channel-skeleton-grid {
+  height: 300px;
+  background-color: var(--muted);
+  border-radius: var(--radius);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.channel-page-loading,
+.channel-page-error {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* --- Video Dropdown Menu --- */
+.video-menu-container {
+  position: relative;
+  display: inline-flex;
+  z-index: 10;
+}
+
+.card-menu-btn.active {
+  opacity: 1;
+  color: var(--text-foreground);
+}
+
+/* --- Video Dropdown Menu --- */
+.video-dropdown-menu {
+  min-width: 195px;
+  background-color: var(--background-secondary, #1e293b);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 8px;
+  padding: 0.35rem;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.35),
+    0 6px 12px -2px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-foreground, #f8fafc);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--border, rgba(255, 255, 255, 0.1));
+  margin: 0.25rem 0;
+}
+
+.dropdown-item-danger {
+  color: var(--destructive, #ef4444);
 }

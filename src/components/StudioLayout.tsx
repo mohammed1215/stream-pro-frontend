@@ -8,13 +8,30 @@ import {
   Bell,
   ChevronRight,
   Play,
-  type LucideProps,
+  Menu,
+  X,
+  Sparkles,
+  type LucideIcon,
 } from "lucide-react"
-import { type ForwardRefExoticComponent, type RefAttributes } from "react"
-import { NavLink, Outlet } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { NavLink, Outlet, useLocation } from "react-router-dom"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { useAuth } from "../features/Auth/hooks/useAuth"
+import { CreatePlaylistModal2 } from "./VideoActionMenu"
+import { usePlaylistModal } from "../hooks/usePlaylistModal"
+import { useCreateVideoModal } from "../hooks/useCreateVideo"
+import { CreateVideoModal } from "./CreateVideoModal"
+import { CreatePlaylistModal } from "./CreatePlaylistModal"
 
-const STUDIO_NAV_ITEMS = [
+interface StudioNavItemConfig {
+  name: string
+  href: string
+  icon: LucideIcon
+  end?: boolean
+  group: "Overview" | "Manage" | "Insights"
+}
+
+const STUDIO_NAV_ITEMS: StudioNavItemConfig[] = [
   {
     name: "Dashboard",
     href: "/studio",
@@ -37,141 +54,270 @@ const STUDIO_NAV_ITEMS = [
   },
 ]
 
-type StudioNavItem = {
-  name: string
-  href: string
-  icon: ForwardRefExoticComponent<
-    Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
-  >
-  end?: boolean
-  group: string
-}
-
-const StudioNavItem = ({ item }: { item: StudioNavItem }) => (
+const StudioNavItem = ({
+  item,
+  onNavigate,
+}: {
+  item: StudioNavItemConfig
+  onNavigate?: () => void
+}) => (
   <NavLink
     to={item.href}
     end={item.end}
+    onClick={onNavigate}
     className={({ isActive }) =>
-      `group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200
-       ${
-         isActive
-           ? "bg-indigo-50 text-indigo-700"
-           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-       }`
+      `group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
+        isActive
+          ? "bg-cyan-500/10 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
+      }`
     }
   >
     {({ isActive }) => (
       <>
         {isActive && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-indigo-600 shadow-sm shadow-indigo-200" />
+          <motion.div
+            layoutId="studio-active-pill"
+            transition={{ type: "spring", stiffness: 450, damping: 35 }}
+            className="absolute inset-y-1 left-0 w-1 rounded-r-full bg-cyan-600 dark:bg-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.5)]"
+          />
         )}
         <item.icon
-          className={`h-[18px] w-[18px] shrink-0 transition-colors ${
+          className={`h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-110 ${
             isActive
-              ? "text-indigo-600"
-              : "text-gray-400 group-hover:text-gray-600"
+              ? "text-cyan-600 dark:text-cyan-400"
+              : "text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300"
           }`}
         />
-        <span className="whitespace-nowrap">{item.name}</span>
+        <span className="truncate">{item.name}</span>
       </>
     )}
   </NavLink>
 )
 
-export const StudioLayout = () => {
-  const { user } = useAuth()
+const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
+  const groups = ["Overview", "Manage", "Insights"] as const
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Studio topbar */}
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-gray-200 bg-white/95 px-6 backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-200">
-            <Play className="h-4 w-4 text-white fill-white" />
+    <div className="flex h-full flex-col justify-between">
+      {/* Navigation Groups */}
+      <div className="flex-1 space-y-6 overflow-y-auto px-4 py-5">
+        {groups.map((group) => {
+          const items = STUDIO_NAV_ITEMS.filter((i) => i.group === group)
+          if (!items.length) return null
+
+          return (
+            <div key={group} className="space-y-1">
+              <h3 className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {group}
+              </h3>
+              <nav className="flex flex-col gap-0.5 pt-1">
+                {items.map((item) => (
+                  <StudioNavItem
+                    key={item.href}
+                    item={item}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </nav>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Storage Footer Widget */}
+      <div className="shrink-0 border-t border-slate-200/80 p-4 dark:border-slate-800/80">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-slate-200">
+            <span className="flex items-center gap-1.5">
+              <HardDrive className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+              Storage
+            </span>
+            <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+              75%
+            </span>
           </div>
-          <span className="text-base font-bold tracking-tight text-gray-900">
-            Stream Pro
-          </span>
-          <span className="rounded-md border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-            Studio
-          </span>
+
+          <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500" />
+          </div>
+
+          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+            <span>75 GB used</span>
+            <span>100 GB</span>
+          </div>
+
+          <button className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-700">
+            <Sparkles className="h-3 w-3 text-cyan-500" />
+            Upgrade Plan
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export const StudioLayout = () => {
+  const user = useAuth((state) => state.user)
+  const { isOpen, close } = usePlaylistModal()
+  const {
+    isOpen: isVideoModalOpen,
+    open: openVideoModal,
+    close: closeVideoModal,
+  } = useCreateVideoModal()
+
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const location = useLocation()
+  const shouldReduceMotion = useReducedMotion()
+
+  const [lastPathname, setLastPathname] = useState(location.pathname)
+  if (location.pathname !== lastPathname) {
+    setLastPathname(location.pathname)
+    setMobileNavOpen(false)
+  }
+
+  useEffect(() => {
+    if (!mobileNavOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileNavOpen(false)
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileNavOpen])
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-cyan-500/20 selection:text-cyan-700 dark:bg-slate-950 dark:text-slate-100 dark:selection:text-cyan-300">
+      {/* Top Navbar */}
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/80 sm:px-6">
+        {/* Left: Mobile Toggle & Branding */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileNavOpen(true)}
+            className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white lg:hidden"
+            aria-label="Open navigation menu"
+            aria-expanded={mobileNavOpen}
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+
+          <NavLink to="/studio" className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-600 text-white shadow-sm shadow-cyan-500/30">
+              <Play className="h-4 w-4 fill-white" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+                Stream Pro
+              </span>
+              <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+                Studio
+              </span>
+            </div>
+          </NavLink>
         </div>
 
-        <div className="flex-1" />
+        {/* Right Actions */}
+        <div className="flex items-center gap-2.5">
+          <motion.button
+            onClick={openVideoModal}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 rounded-xl bg-cyan-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-cyan-600/20 transition hover:bg-cyan-500 dark:bg-cyan-500 dark:text-slate-950 dark:shadow-cyan-500/20 dark:hover:bg-cyan-400"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span className="hidden sm:inline">Create</span>
+          </motion.button>
 
-        <button className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all hover:shadow-md active:scale-[0.98]">
-          <Plus className="w-4 h-4" />
-          Create
-        </button>
+          <button className="relative rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white">
+            <Bell className="h-4 w-4" />
+            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-950" />
+          </button>
 
-        <button className="relative p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-        </button>
+          <NavLink
+            to="/"
+            className="hidden items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white md:flex"
+          >
+            <span>Back to App</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </NavLink>
 
-        <NavLink
-          to="/"
-          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-        >
-          <span>Back to App</span>
-          <ChevronRight className="w-4 h-4" />
-        </NavLink>
+          <div className="mx-1 hidden h-5 w-px bg-slate-200 dark:bg-slate-800 md:block" />
 
-        <div className="h-6 w-px bg-gray-200 mx-1" />
-
-        <button className="flex items-center gap-2 rounded-lg p-1 hover:bg-gray-100 transition-colors">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white">
-            {user?.name.slice(0, 2).toUpperCase()}
+          {/* User Profile Avatar */}
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 text-xs font-bold text-white shadow-sm">
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : "SP"}
           </div>
-        </button>
+        </div>
       </header>
 
-      <div className="flex">
-        <aside className="fixed bottom-0 left-0 top-16 w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white flex flex-col">
-          <div className="flex-1 p-4 space-y-6">
-            {["Overview", "Manage", "Insights"].map((group) => (
-              <div key={group}>
-                <h3 className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                  {group}
-                </h3>
-                <nav className="flex flex-col gap-1">
-                  {STUDIO_NAV_ITEMS.filter((i) => i.group === group).map(
-                    (item) => (
-                      <StudioNavItem key={item.href} item={item} />
-                    )
-                  )}
-                </nav>
-              </div>
-            ))}
-          </div>
-
-          <div className="p-4 border-t border-gray-100">
-            <div className="bg-gradient-to-br from-indigo-50 via-indigo-50/50 to-blue-50 rounded-xl p-4 border border-indigo-100">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 bg-white rounded-md shadow-sm">
-                  <HardDrive className="w-3.5 h-3.5 text-indigo-600" />
-                </div>
-                <span className="text-sm font-semibold text-gray-900">
-                  Storage
-                </span>
-              </div>
-              <div className="h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden mb-2">
-                <div className="h-full w-3/4 bg-indigo-600 rounded-full transition-all" />
-              </div>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                <span className="font-semibold text-gray-900">75 GB</span> of
-                100 GB used.
-              </p>
-              <button className="mt-3 w-full text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-md py-1.5 transition-colors">
-                Upgrade Plan
-              </button>
-            </div>
-          </div>
+      {/* Main Body */}
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        {/* Fixed Desktop Sidebar */}
+        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-slate-200/80 bg-white/70 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/70 lg:block">
+          <SidebarContent />
         </aside>
 
-        <main className="ml-64 flex-1 p-8 min-h-[calc(100vh-4rem)]">
+        {/* Mobile Animated Drawer */}
+        <AnimatePresence>
+          {mobileNavOpen && (
+            <>
+              <motion.div
+                key="backdrop"
+                className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+                onClick={() => setMobileNavOpen(false)}
+              />
+              <motion.aside
+                key="drawer"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Studio navigation"
+                className="fixed bottom-0 left-0 top-0 z-50 flex w-72 max-w-[80vw] flex-col border-r border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950 lg:hidden"
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 420, damping: 40 }
+                }
+              >
+                <div className="flex h-16 items-center justify-between border-b border-slate-200/80 px-4 dark:border-slate-800/80">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Menu
+                  </span>
+                  <button
+                    onClick={() => setMobileNavOpen(false)}
+                    className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+                    aria-label="Close navigation"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <SidebarContent onNavigate={() => setMobileNavOpen(false)} />
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Content Outlet Canvas */}
+        <main className="min-w-0 flex-1 overflow-x-hidden">
           <Outlet />
         </main>
       </div>
+
+      <CreatePlaylistModal />
+      <CreateVideoModal isOpen={isVideoModalOpen} onClose={closeVideoModal} />
     </div>
   )
 }

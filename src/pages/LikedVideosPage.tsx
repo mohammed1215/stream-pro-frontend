@@ -11,7 +11,7 @@ import {
   ListVideo,
 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { formatDuration, formatNumber } from "../lib/helpers"
+import { formatDurationInSeconds, formatNumber } from "../lib/helpers"
 import { useNavigate } from "react-router-dom"
 import { getLikedVideos, type LikedVideoItem } from "../lib/likes"
 
@@ -55,7 +55,7 @@ const VideoCard = ({
 
         {/* Duration Overlay */}
         <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
-          {formatDuration(item.video.duration)}
+          {formatDurationInSeconds(item.video.durationSeconds)}
         </div>
       </div>
 
@@ -169,7 +169,7 @@ const EmptyLikedVideosState = () => {
 // --- Main Component ---
 
 export const LikedVideosPage = () => {
-  const { user } = useAuth()
+  const user = useAuth((state) => state.user)
   const {
     data: likedVideos,
     isLoading,
@@ -208,7 +208,7 @@ export const LikedVideosPage = () => {
               {allItems.length > 0 ? (
                 <img
                   src={allItems[0].video.thumbnailUrl}
-                  alt="Watch Later Cover"
+                  alt="Liked Videos Cover"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -229,7 +229,7 @@ export const LikedVideosPage = () => {
                   </span>
                 </div>
                 <h1 className="text-3xl font-bold tracking-tight leading-tight">
-                  Watch Later
+                  Liked Videos
                 </h1>
                 <div className="flex items-center gap-2 mt-3 text-sm text-white/80">
                   <img

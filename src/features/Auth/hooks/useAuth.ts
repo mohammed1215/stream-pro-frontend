@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { create } from "zustand"
 
 interface User {
   id: string
@@ -7,24 +7,36 @@ interface User {
   avatarUrl: string
 }
 
-export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(
-    localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user") as string)
-      : null
-  )
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token") ? localStorage.getItem("token") : null
-  )
-  const login = (userData: User, token: string) => {
-    localStorage.setItem("user", JSON.stringify(userData))
-    localStorage.setItem("token", token)
-    setUser(userData)
-    setToken(token)
-  }
-  return {
-    user,
-    login,
-    token,
+interface AuthState {
+  user: User | null
+  token: string | null
+  login: (userData: User, token: string) => void
+  logout: () => void
+}
+
+const getStoredUser = (): User | null => {
+  const raw = localStorage.getItem("stream_user")
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as User
+  } catch {
+    return null
   }
 }
+
+export const useAuth = create<AuthState>((set) => ({
+  user: getStoredUser(),
+  token: localStorage.getItem("stream_token"),
+
+  login: (userData, token) => {
+    localStorage.setItem("stream_user", JSON.stringify(userData))
+    localStorage.setItem("stream_token", token)
+    set({ user: userData, token })
+  },
+
+  logout: () => {
+    localStorage.removeItem("stream_user")
+    localStorage.removeItem("stream_token")
+    set({ user: null, token: null })
+  },
+}))
