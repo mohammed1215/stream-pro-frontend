@@ -15,6 +15,8 @@ export type VideoCardVideo = {
   durationSeconds?: number
   views?: number
   createdAt?: string
+  channelId?: string
+  categoryId?: string
   channel?: {
     id?: string
     title?: string

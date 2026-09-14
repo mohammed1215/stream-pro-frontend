@@ -36,6 +36,7 @@ export const useVideoUpload = () => {
       tags,
       categoryId,
       description,
+      publishTime,
     }: {
       title: string
       description: string
@@ -43,6 +44,7 @@ export const useVideoUpload = () => {
       categoryId: string
       videoFile: File
       thumbnailFile: File | null
+      publishTime?: string
     }) => {
       resetProgress()
       abortControllerRef.current = new AbortController()
@@ -55,6 +57,7 @@ export const useVideoUpload = () => {
         description,
         tags,
         categoryId,
+        publishTime,
       })
       const { videoId, signatureVideoData, signatureThumbnailData } = res.data
 

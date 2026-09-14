@@ -119,6 +119,7 @@ export const initiateVideoUploadApi = async (payload: {
   description: string
   tags: string[]
   categoryId: string
+  publishTime?: Date
 }): Promise<InitVideoResponse> => {
   const res = await axiosInstance.post<InitVideoResponse>(
     "/api/v1/owner/videos/initiate",

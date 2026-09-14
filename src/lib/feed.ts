@@ -1,29 +1,27 @@
 import axiosInstance from "./api"
-
 export interface FeedResponse {
-  sections: [
-    {
-      key: string
-      title: string
-      type: "TRENDING" | "LATEST" | "SUBSCRIPTIONS"
-      videos: [
-        {
-          id: string
-          title: string
-          thumbnailUrl: string
-          duration: number
-          views: number
-          createdAt: string
-          channel: {
-            id: string
-            title: string
-            thumbnailUrl: string
-          }
-        }
-      ]
-    }
-  ]
+  id: string
+  title?: string
+  thumbnailUrl?: string
+  durationSeconds?: number
+  views?: number
+  createdAt?: string
+  channelId?: string
+  categoryId?: string
+  channel?: {
+    id?: string
+    title?: string
+    thumbnailUrl?: string
+  }
 }
-export function getFeed() {
-  return axiosInstance.get<FeedResponse>("/api/v1/feed").then((res) => res.data)
+export function getFeed(queryParams?: { excludeIds?: string[] }) {
+  return axiosInstance
+    .get<FeedResponse[]>("/api/v1/feed", {
+      params: {
+        excludeIds: queryParams?.excludeIds?.length
+          ? queryParams.excludeIds.join(",")
+          : undefined,
+      },
+    })
+    .then((res) => res.data)
 }
