@@ -36,6 +36,7 @@ import {
   updateVideoStatus,
 } from "../lib/video"
 import { getCategoriesApi } from "../lib/category"
+import { DateTimePicker } from "../components/DateTimePicker"
 
 export const StudioEditVideoPage = () => {
   const { videoId } = useParams<{ videoId: string }>()
@@ -610,14 +611,13 @@ export const StudioEditVideoPage = () => {
                       <Clock className="h-3.5 w-3.5 text-slate-400" />
                       Schedule publish time
                     </label>
-                    <input
-                      id="publishTime"
-                      type="datetime-local"
+
+                    <DateTimePicker
                       value={publishTime}
-                      min={new Date().toISOString().slice(0, 16)}
-                      onChange={(e) => setPublishTime(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white"
+                      onChange={(val) => setPublishTime(val)}
+                      minDate={new Date()}
                     />
+
                     <p className="mt-1.5 text-[11px] text-slate-400">
                       Leave empty to keep the video unscheduled — you'll need to
                       publish it manually.

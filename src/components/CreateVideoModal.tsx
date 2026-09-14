@@ -25,6 +25,7 @@ import {
 import { useVideoUpload } from "../hooks/useVideoUpload"
 import axiosInstance from "../lib/api"
 import { useQuery } from "@tanstack/react-query"
+import { DateTimePicker } from "./DateTimePicker"
 
 export function TagsInput({
   tags,
@@ -647,16 +648,10 @@ export const CreateVideoModal = ({
                             exit={{ opacity: 0, height: 0 }}
                             className="overflow-hidden"
                           >
-                            <input
-                              type="datetime-local"
-                              disabled={isUploading}
+                            <DateTimePicker
                               value={publishTime}
-                              min={minPublishTimeRef.current}
-                              onChange={(e) => {
-                                setPublishTime(e.target.value)
-                                setError(null)
-                              }}
-                              className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                              onChange={(value) => setPublishTime(value)}
+                              minDate={minPublishTimeRef.current}
                             />
                             <p className="mt-1.5 text-[10px] text-slate-400">
                               Times are in your local timezone

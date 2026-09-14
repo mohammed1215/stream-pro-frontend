@@ -55,6 +55,12 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ]
 
+const MOBILE_BOTTOM_NAV = [
+  { name: "Home", href: "/", icon: Home },
+  { name: "Subscriptions", href: "/feed/subscriptions", icon: ListVideo },
+  { name: "Studio", href: "/studio", icon: LayoutDashboard },
+]
+
 const NavItem = ({
   item,
   isClosed,
@@ -137,7 +143,6 @@ const NavItem = ({
   )
 }
 
-// المحتوى واحد، بيتقرا مرتين (ديسكتوب + درج الموبايل) عشان يفضل الـ layout بسيط ومفيهوش شرط JS معقد بين الاتنين
 const SidebarNav = ({
   isClosed,
   onNavigate,
@@ -183,12 +188,11 @@ const SidebarNav = ({
 )
 
 export const SidebarLayout = () => {
-  const [isClosed, setIsClosed] = useState(false) // desktop: collapsed to icons
-  const [isMobileOpen, setIsMobileOpen] = useState(false) // mobile: drawer open/closed
+  const [isClosed, setIsClosed] = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
   const location = useLocation()
   const currentOutlet = useOutlet()
 
-  // اقفل الدرج تلقائي عند تغيير الصفحة، وامنع الـ body من الـ scroll وهو مفتوح
   useEffect(() => {
     setIsMobileOpen(false)
   }, [location.pathname])
@@ -209,16 +213,6 @@ export const SidebarLayout = () => {
       />
 
       <div className="relative flex flex-1 overflow-hidden">
-        {/* زرار فتح الدرج - موبايل بس */}
-        <button
-          type="button"
-          onClick={() => setIsMobileOpen(true)}
-          aria-label="Open menu"
-          className="fixed bottom-5 left-4 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-lg md:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-
         {/* Desktop Sidebar */}
         <motion.aside
           initial={false}
@@ -241,38 +235,31 @@ export const SidebarLayout = () => {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => setIsMobileOpen(false)}
-                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+                className="fixed inset-0 z-40 bg-black/75 backdrop-blur-md md:hidden"
                 aria-hidden="true"
               />
               <motion.aside
-                initial={{ x: "-100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "-100%" }}
-                transition={{ type: "spring", stiffness: 320, damping: 32 }}
-                className="fixed inset-y-0 left-0 z-50 w-[78%] max-w-[280px] border-r border-border bg-card shadow-2xl md:hidden"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-2xl border-t border-border bg-card shadow-2xl md:hidden"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Navigation menu"
               >
                 <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
-                  <span className="text-sm font-semibold">
-                    <img
-                      src="/logo_icon.svg"
-                      alt="Stream Pro"
-                      className="h-7 w-7"
-                    />
-                    Menu
-                  </span>
+                  <span className="text-sm font-semibold">Menu</span>
                   <button
                     type="button"
                     onClick={() => setIsMobileOpen(false)}
                     aria-label="Close menu"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                   >
                     <X className="h-4.5 w-4.5" />
                   </button>
                 </div>
-                <div className="flex h-[calc(100%-57px)] flex-col overflow-y-auto px-3 py-4 scrollbar-thin">
+                <div className="flex max-h-[calc(85vh-57px)] flex-col overflow-y-auto px-3 py-4 scrollbar-thin">
                   <SidebarNav
                     isClosed={false}
                     onNavigate={() => setIsMobileOpen(false)}
@@ -284,7 +271,7 @@ export const SidebarLayout = () => {
         </AnimatePresence>
 
         {/* Main Content Viewport */}
-        <main className="relative flex-1 overflow-x-hidden overflow-y-auto bg-background p-4 md:p-6">
+        <main className="relative flex-1 overflow-x-hidden overflow-y-auto bg-background p-4 pb-20 md:p-6 md:pb-6">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
@@ -302,6 +289,63 @@ export const SidebarLayout = () => {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* 📱 Mobile Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-border bg-card/98 px-2 backdrop-blur-xl md:hidden">
+        {MOBILE_BOTTOM_NAV.map((item) => {
+          const Icon = item.icon
+          return (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              end={item.href === "/"}
+              className="relative flex flex-1 flex-col items-center justify-center gap-1 py-1 text-xs outline-none"
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.div
+                      layoutId="bottomNavActive"
+                      className="absolute inset-x-2 inset-y-0.5 rounded-xl bg-secondary"
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 35,
+                      }}
+                    />
+                  )}
+                  <Icon
+                    className={`relative z-10 h-5 w-5 transition-colors ${
+                      isActive
+                        ? "text-primary font-bold"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <span
+                    className={`relative z-10 truncate font-medium ${
+                      isActive
+                        ? "text-foreground font-semibold"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          )
+        })}
+
+        <button
+          type="button"
+          onClick={() => setIsMobileOpen(true)}
+          className="flex flex-1 flex-col items-center justify-center gap-1 py-1 text-xs text-muted-foreground outline-none"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="font-medium">More</span>
+        </button>
+      </nav>
+
       <CreatePlaylistModal />
     </div>
   )
