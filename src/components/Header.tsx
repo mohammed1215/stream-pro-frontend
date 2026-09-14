@@ -1,5 +1,5 @@
-import { Bell, Menu, Plus, Search, Moon, Sun } from "lucide-react"
-import { motion } from "framer-motion"
+import { Bell, Menu, Plus, Search, Moon, Sun, ArrowLeft } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "../features/Auth/hooks/useAuth"
 import { InputGroup, InputGroupButton, InputGroupInput } from "./ui/input-group"
 import { Button } from "./ui/button"
@@ -12,16 +12,22 @@ interface SearchFormProps {
   value: string
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   onSubmit: (event: React.FormEvent) => void
+  autoFocus?: boolean
 }
 
-export const SearchForm = ({ value, onChange, onSubmit }: SearchFormProps) => {
+export const SearchForm = ({
+  value,
+  onChange,
+  onSubmit,
+  autoFocus,
+}: SearchFormProps) => {
   return (
-    <form role="search" onSubmit={onSubmit} className="w-full max-w-lg mx-auto">
+    <form role="search" onSubmit={onSubmit} className="mx-auto w-full max-w-lg">
       <label htmlFor="site-search" className="sr-only">
         Search videos
       </label>
 
-      <InputGroup className="overflow-hidden rounded-full h-10 border border-border/80 bg-muted/40 focus-within:border-primary/60 transition-colors">
+      <InputGroup className="h-10 overflow-hidden rounded-full border border-border/80 bg-muted/40 transition-colors focus-within:border-primary/60">
         <InputGroupInput
           id="site-search"
           name="q"
@@ -30,15 +36,16 @@ export const SearchForm = ({ value, onChange, onSubmit }: SearchFormProps) => {
           value={value}
           onChange={onChange}
           autoComplete="off"
-          className="px-4 text-sm bg-transparent"
+          autoFocus={autoFocus}
+          className="bg-transparent px-4 text-sm"
         />
 
         <InputGroupButton
           type="submit"
-          className="h-full rounded-s-none px-4 transition-all active:scale-95 cursor-pointer disabled:opacity-40"
+          className="h-full cursor-pointer rounded-s-none px-4 transition-all active:scale-95 disabled:opacity-40"
           disabled={!value.trim()}
         >
-          <Search className="w-4 h-4 text-muted-foreground" />
+          <Search className="h-4 w-4 text-muted-foreground" />
           <span className="sr-only">Submit search</span>
         </InputGroupButton>
       </InputGroup>
@@ -47,76 +54,125 @@ export const SearchForm = ({ value, onChange, onSubmit }: SearchFormProps) => {
 }
 
 export const Header = ({
+  isOpen,
   isClosed,
-  setIsClosed,
+  onMenuClick,
 }: {
+  isOpen: boolean
   isClosed: boolean
-  setIsClosed: React.Dispatch<React.SetStateAction<boolean>>
+  onMenuClick: () => void
 }) => {
   const user = useAuth((state) => state.user)
   const [searchTerm, setSearchTerm] = useState("")
   const [openNotifications, setOpenNotifications] = useState(false)
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
     const query = searchTerm.trim()
     if (!query) return
+    setIsMobileSearchOpen(false)
     router.navigate(`/search?q=${encodeURIComponent(query)}`)
   }
 
+  // شاشة البحث بتاعة الموبايل: بتاخد مكان الـ header كله مؤقتًا
+  if (isMobileSearchOpen) {
+    return (
+      <header className="sticky top-0 z-50 flex items-center gap-2 border-b border-border/60 bg-background/95 px-3 py-2.5 backdrop-blur-md md:hidden">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsMobileSearchOpen(false)}
+          aria-label="Close search"
+          className="shrink-0 rounded-full hover:bg-muted"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <SearchForm
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          onSubmit={handleSubmit}
+          autoFocus
+        />
+      </header>
+    )
+  }
+
   return (
-    <header className="text-foreground bg-background/95 backdrop-blur-md px-6 py-3 flex justify-between items-center border-b border-border/60 sticky top-0 z-50">
-      {/* 1️⃣ Left: Sidebar toggle & Logo */}
-      <div
-        className={`flex gap-3 ${
-          isClosed ? "justify-center" : "justify-start"
-        } items-center`}
-      >
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-2 border-b border-border/60 bg-background/95 px-3 py-2.5 backdrop-blur-md sm:px-6 sm:py-3">
+      {/* 1️⃣ Left: Sidebar/menu toggle & Logo */}
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsClosed((prev) => !prev)}
-            aria-label={isClosed ? "Open sidebar" : "Close sidebar"}
+            onClick={onMenuClick}
+            aria-label="Toggle menu"
             aria-expanded={!isClosed}
             aria-controls="sidebar"
-            className="rounded-full hover:bg-muted"
+            className="rounded-full hover:bg-muted hidden md:flex"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="h-5 w-5" />
           </Button>
         </motion.div>
 
         <div
-          className="flex items-center gap-2.5 cursor-pointer"
+          className="flex cursor-pointer items-center gap-2.5"
           onClick={() => router.navigate("/")}
         >
-          <img src="/logo_icon.svg" alt="Stream Pro" className="w-7 h-7" />
-          <div className="flex flex-col">
-            <h1 className="text-base font-bold tracking-tight leading-none">
+          <img
+            src="/logo_icon.svg"
+            alt="Stream Pro"
+            className={`h-7 w-7 ${isOpen ? "hidden" : ""}`}
+          />
+          <div className="hidden flex-col sm:flex">
+            <h1 className="text-base font-bold leading-none tracking-tight">
               Stream Pro
             </h1>
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Premium
             </span>
           </div>
         </div>
       </div>
 
-      {/* 2️⃣ Center: Search Bar */}
-      <SearchForm
-        value={searchTerm}
-        onChange={(event) => setSearchTerm(event.target.value)}
-        onSubmit={handleSubmit}
-      />
+      {/* 2️⃣ Center: Search Bar - desktop/tablet only */}
+      <div className="hidden flex-1 md:block">
+        <SearchForm
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          onSubmit={handleSubmit}
+        />
+      </div>
 
       {/* 3️⃣ Right: Actions & Profile */}
-      <section className="flex items-center gap-2 sm:gap-3">
+      <section className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+        {/* Search icon - mobile only */}
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="md:hidden"
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSearchOpen(true)}
+            aria-label="Open search"
+            className="rounded-full text-foreground/80 hover:bg-muted hover:text-foreground"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+        </motion.div>
+
         {/* Create Button */}
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button className="flex items-center gap-1.5 px-4 h-9 rounded-full font-medium shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer">
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Create</span>
+          <Button
+            size="icon"
+            className="h-9 w-9 cursor-pointer rounded-full bg-primary font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 sm:w-auto sm:gap-1.5 sm:px-4"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span className="hidden sm:inline">Create</span>
           </Button>
         </motion.div>
 
@@ -128,29 +184,32 @@ export const Header = ({
               size="icon"
               aria-label="Notifications"
               onClick={() => setOpenNotifications(!openNotifications)}
-              className="rounded-full relative hover:bg-muted text-foreground/80 hover:text-foreground"
+              className="relative rounded-full text-foreground/80 hover:bg-muted hover:text-foreground"
             >
-              <Bell className="w-5 h-5" />
-              {/* Optional unread dot */}
-              <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
             </Button>
           </motion.div>
           {openNotifications && <NotificationDropDown />}
         </div>
 
-        {/* Theme Toggle Button */}
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        {/* Theme Toggle Button - hidden on very small screens to save space */}
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="hidden xs:block"
+        >
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
             aria-label="Toggle theme"
-            className="rounded-full text-foreground/80 hover:text-foreground hover:bg-muted"
+            className="rounded-full text-foreground/80 hover:bg-muted hover:text-foreground"
           >
             {theme === "light" ? (
-              <Moon className="w-5 h-5" />
+              <Moon className="h-5 w-5" />
             ) : (
-              <Sun className="w-5 h-5" />
+              <Sun className="h-5 w-5" />
             )}
           </Button>
         </motion.div>
@@ -161,7 +220,7 @@ export const Header = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => router.navigate("/profile")}
-          className="cursor-pointer rounded-full ring-2 ring-border hover:ring-primary/60 transition-all ml-1"
+          className="ml-0.5 cursor-pointer rounded-full ring-2 ring-border transition-all hover:ring-primary/60 sm:ml-1"
           aria-label="Go to profile"
         >
           {user?.avatarUrl ? (
@@ -171,7 +230,7 @@ export const Header = ({
               className="h-8 w-8 rounded-full object-cover"
             />
           ) : (
-            <div className="w-8 h-8 bg-secondary text-secondary-foreground rounded-full flex justify-center items-center font-semibold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
               {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </div>
           )}

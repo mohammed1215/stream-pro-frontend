@@ -7,9 +7,11 @@ import {
   Settings,
   User,
   LayoutDashboard,
+  Menu,
+  X,
   type LucideIcon,
 } from "lucide-react"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { NavLink, useLocation, useOutlet } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Header } from "../../../components/Header"
@@ -56,9 +58,11 @@ const NAV_SECTIONS: NavSection[] = [
 const NavItem = ({
   item,
   isClosed,
+  onNavigate,
 }: {
   item: NavItemData
   isClosed: boolean
+  onNavigate?: () => void
 }) => {
   const IconComponent = item.icon
 
@@ -66,12 +70,12 @@ const NavItem = ({
     <NavLink
       to={item.href}
       end={item.href === "/"}
+      onClick={onNavigate}
       className="group relative flex h-11 items-center rounded-xl px-3 text-sm font-medium outline-none transition-colors"
       aria-label={item.name}
     >
       {({ isActive }) => (
         <>
-          {/* Active Background Pill */}
           {isActive && (
             <motion.div
               layoutId="activeNavPill"
@@ -80,12 +84,10 @@ const NavItem = ({
             />
           )}
 
-          {/* Hover highlight for inactive links */}
           {!isActive && (
             <div className="absolute inset-0 rounded-xl bg-transparent transition-colors group-hover:bg-secondary/40" />
           )}
 
-          {/* Icon & Label Container */}
           <div
             className={`relative z-10 flex w-full items-center gap-3.5 ${
               isClosed ? "justify-center" : "justify-start"
@@ -105,7 +107,6 @@ const NavItem = ({
               />
             </motion.div>
 
-            {/* Label Animation */}
             <AnimatePresence mode="wait" initial={false}>
               {!isClosed && (
                 <motion.span
@@ -125,7 +126,6 @@ const NavItem = ({
             </AnimatePresence>
           </div>
 
-          {/* Hover Tooltip (Collapsed State Only) */}
           {isClosed && (
             <div className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-md bg-popover px-2.5 py-1.5 text-xs font-medium text-popover-foreground opacity-0 shadow-md ring-1 ring-border/50 transition-all duration-150 group-hover:translate-x-1 group-hover:opacity-100">
               {item.name}
@@ -137,62 +137,154 @@ const NavItem = ({
   )
 }
 
+// المحتوى واحد، بيتقرا مرتين (ديسكتوب + درج الموبايل) عشان يفضل الـ layout بسيط ومفيهوش شرط JS معقد بين الاتنين
+const SidebarNav = ({
+  isClosed,
+  onNavigate,
+}: {
+  isClosed: boolean
+  onNavigate?: () => void
+}) => (
+  <div className="space-y-6">
+    {NAV_SECTIONS.map((section, idx) => (
+      <div key={idx} className="space-y-1">
+        <AnimatePresence initial={false}>
+          {!isClosed && section.title && (
+            <motion.h3
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70"
+            >
+              {section.title}
+            </motion.h3>
+          )}
+        </AnimatePresence>
+
+        <ul className="space-y-1">
+          {section.items.map((item) => (
+            <li key={item.href}>
+              <NavItem
+                item={item}
+                isClosed={isClosed}
+                onNavigate={onNavigate}
+              />
+            </li>
+          ))}
+        </ul>
+
+        {idx < NAV_SECTIONS.length - 1 && (
+          <hr className="my-4 border-border/60" />
+        )}
+      </div>
+    ))}
+  </div>
+)
+
 export const SidebarLayout = () => {
-  const [isClosed, setIsClosed] = useState(false)
+  const [isClosed, setIsClosed] = useState(false) // desktop: collapsed to icons
+  const [isMobileOpen, setIsMobileOpen] = useState(false) // mobile: drawer open/closed
   const location = useLocation()
   const currentOutlet = useOutlet()
+
+  // اقفل الدرج تلقائي عند تغيير الصفحة، وامنع الـ body من الـ scroll وهو مفتوح
+  useEffect(() => {
+    setIsMobileOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    document.body.style.overflow = isMobileOpen ? "hidden" : ""
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isMobileOpen])
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-      <Header isClosed={isClosed} setIsClosed={setIsClosed} />
+      <Header
+        isClosed={isClosed}
+        isOpen={isMobileOpen}
+        onMenuClick={() => setIsClosed(!isClosed)}
+      />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Animated Sidebar */}
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* زرار فتح الدرج - موبايل بس */}
+        <button
+          type="button"
+          onClick={() => setIsMobileOpen(true)}
+          aria-label="Open menu"
+          className="fixed bottom-5 left-4 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-lg md:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Desktop Sidebar */}
         <motion.aside
           initial={false}
           animate={{ width: isClosed ? 76 : 240 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="relative shrink-0 border-r border-border bg-card"
+          className="relative hidden shrink-0 border-r border-border bg-card md:block"
         >
           <div className="flex h-full flex-col overflow-x-hidden overflow-y-auto px-3 py-4 scrollbar-thin">
-            <div className="space-y-6">
-              {NAV_SECTIONS.map((section, idx) => (
-                <div key={idx} className="space-y-1">
-                  {/* Section Title */}
-                  <AnimatePresence initial={false}>
-                    {!isClosed && section.title && (
-                      <motion.h3
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                        className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70"
-                      >
-                        {section.title}
-                      </motion.h3>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Section Items */}
-                  <ul className="space-y-1">
-                    {section.items.map((item) => (
-                      <li key={item.href}>
-                        <NavItem item={item} isClosed={isClosed} />
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Section Divider */}
-                  {idx < NAV_SECTIONS.length - 1 && (
-                    <hr className="my-4 border-border/60" />
-                  )}
-                </div>
-              ))}
-            </div>
+            <SidebarNav isClosed={isClosed} />
           </div>
         </motion.aside>
 
+        {/* Mobile Drawer */}
+        <AnimatePresence>
+          {isMobileOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setIsMobileOpen(false)}
+                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+                aria-hidden="true"
+              />
+              <motion.aside
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", stiffness: 320, damping: 32 }}
+                className="fixed inset-y-0 left-0 z-50 w-[78%] max-w-[280px] border-r border-border bg-card shadow-2xl md:hidden"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Navigation menu"
+              >
+                <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
+                  <span className="text-sm font-semibold">
+                    <img
+                      src="/logo_icon.svg"
+                      alt="Stream Pro"
+                      className="h-7 w-7"
+                    />
+                    Menu
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileOpen(false)}
+                    aria-label="Close menu"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                  >
+                    <X className="h-4.5 w-4.5" />
+                  </button>
+                </div>
+                <div className="flex h-[calc(100%-57px)] flex-col overflow-y-auto px-3 py-4 scrollbar-thin">
+                  <SidebarNav
+                    isClosed={false}
+                    onNavigate={() => setIsMobileOpen(false)}
+                  />
+                </div>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+
         {/* Main Content Viewport */}
-        <main className="relative flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
+        <main className="relative flex-1 overflow-x-hidden overflow-y-auto bg-background p-4 md:p-6">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}

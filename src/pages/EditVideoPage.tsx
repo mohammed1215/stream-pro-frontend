@@ -19,6 +19,9 @@ import {
   Sparkles,
   ExternalLink,
   X,
+  Clock,
+  Tag,
+  FolderOpen,
 } from "lucide-react"
 import {
   updateVideoDetails,
@@ -32,6 +35,7 @@ import {
   confirmUploadVideoApi,
   updateVideoStatus,
 } from "../lib/video"
+import { getCategoriesApi } from "../lib/category"
 
 export const StudioEditVideoPage = () => {
   const { videoId } = useParams<{ videoId: string }>()
@@ -45,6 +49,17 @@ export const StudioEditVideoPage = () => {
     message: string
     type: "success" | "error"
   } | null>(null)
+
+  const [categoryId, setCategoryId] = useState("")
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState("")
+  const [publishTime, setPublishTime] = useState("")
+
+  const toDatetimeLocalValue = (iso: string) => {
+    const date = new Date(iso)
+    const offset = date.getTimezoneOffset()
+    return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 16)
+  }
 
   // Upload Progress Tracking
   const [thumbnailProgress, setThumbnailProgress] = useState<number | null>(
@@ -66,10 +81,61 @@ export const StudioEditVideoPage = () => {
     enabled: !!videoId,
   })
 
+  const { data: categories, isLoading: isCategoriesLoading } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategoriesApi,
+    staleTime: 1000 * 60 * 10,
+  })
+
+  const MAX_TAGS = 15
+
+  const handleAddTag = () => {
+    const value = tagInput.trim()
+    if (!value) return
+    if (tags.includes(value)) {
+      setTagInput("")
+      return
+    }
+    if (tags.length >= MAX_TAGS) {
+      showToast(`You can add up to ${MAX_TAGS} tags`, "error")
+      return
+    }
+    setTags((prev) => [...prev, value])
+    setTagInput("")
+  }
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault()
+      handleAddTag()
+    } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+      setTags((prev) => prev.slice(0, -1))
+    }
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags((prev) => prev.filter((t) => t !== tagToRemove))
+  }
+
+  const hasChanges =
+    video &&
+    (title !== video.title ||
+      description !== (video.description || "") ||
+      categoryId !== (video.categoryId || "") ||
+      JSON.stringify(tags) !== JSON.stringify(video.tags || []) ||
+      (!video.isPublished &&
+        publishTime !==
+          (video.publishTime ? toDatetimeLocalValue(video.publishTime) : "")))
+
   useEffect(() => {
     if (video) {
       setTitle(video.title || "")
       setDescription(video.description || "")
+      setCategoryId(video.categoryId || "")
+      setTags(video.tags || [])
+      setPublishTime(
+        video.publishTime ? toDatetimeLocalValue(video.publishTime) : ""
+      )
     }
   }, [video])
 
@@ -113,7 +179,7 @@ export const StudioEditVideoPage = () => {
     }
   }
 
-  // 2. Thumbnail Upload Mutation
+  // Thumbnail Upload Mutation
   const thumbnailMutation = useMutation({
     mutationFn: async ({ videoId, file }: { videoId: string; file: File }) => {
       setThumbnailProgress(0)
@@ -168,7 +234,7 @@ export const StudioEditVideoPage = () => {
     },
   })
 
-  // 3. Media Upload Mutation
+  // Media Upload Mutation
   const mediaMutation = useMutation({
     mutationFn: async ({ videoId, file }: { videoId: string; file: File }) => {
       setMediaProgress(0)
@@ -226,9 +292,18 @@ export const StudioEditVideoPage = () => {
     },
   })
 
-  // 4. Details Mutation
+  // Details Mutation
   const detailsMutation = useMutation({
-    mutationFn: () => updateVideoDetails(videoId!, { title, description }),
+    mutationFn: () =>
+      updateVideoDetails(videoId!, {
+        title,
+        description,
+        categoryId: categoryId || null,
+        tags,
+        ...(!video?.isPublished && {
+          publishTime: publishTime ? new Date(publishTime).toISOString() : null,
+        }),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["video", videoId] })
       showToast("Video details saved", "success")
@@ -236,7 +311,7 @@ export const StudioEditVideoPage = () => {
     onError: () => showToast("Couldn't save changes.", "error"),
   })
 
-  // 5. Status Mutation
+  // Status Mutation
   const statusMutation = useMutation({
     mutationFn: () => updateVideoStatus(videoId!),
     onMutate: async () => {
@@ -264,10 +339,6 @@ export const StudioEditVideoPage = () => {
       queryClient.invalidateQueries({ queryKey: ["video", videoId] })
     },
   })
-
-  const hasChanges =
-    video &&
-    (title !== video.title || description !== (video.description || ""))
 
   if (isLoading) {
     return (
@@ -439,6 +510,120 @@ export const StudioEditVideoPage = () => {
                     className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white dark:placeholder-slate-500 dark:focus:bg-transparent"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Category, Tags & Schedule */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div className="border-b border-slate-100 pb-4 dark:border-slate-800/80">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Category, Tags & Schedule
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Help viewers discover your video
+                </p>
+              </div>
+
+              <div className="mt-5 space-y-5">
+                {/* Category */}
+                <div>
+                  <label
+                    htmlFor="category"
+                    className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300"
+                  >
+                    <FolderOpen className="h-3.5 w-3.5 text-slate-400" />
+                    Category
+                  </label>
+                  <select
+                    id="category"
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    disabled={isCategoriesLoading}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white"
+                  >
+                    <option value="">
+                      {isCategoriesLoading
+                        ? "Loading categories..."
+                        : "Select a category"}
+                    </option>
+                    {categories?.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <label
+                    htmlFor="tags"
+                    className="mb-2 flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-300"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Tag className="h-3.5 w-3.5 text-slate-400" />
+                      Tags
+                    </span>
+                    <span className="font-mono text-[11px] text-slate-400">
+                      {tags.length}/{MAX_TAGS}
+                    </span>
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2.5 focus-within:border-cyan-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="flex items-center gap-1 rounded-lg bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      id="tags"
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleTagKeyDown}
+                      onBlur={handleAddTag}
+                      placeholder={
+                        tags.length === 0 ? "Add a tag and press Enter" : ""
+                      }
+                      disabled={tags.length >= MAX_TAGS}
+                      className="min-w-[100px] flex-1 bg-transparent px-1 py-1 text-sm text-slate-900 outline-none placeholder-slate-400 dark:text-white dark:placeholder-slate-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Publish Time - only when not published */}
+                {!video.isPublished && (
+                  <div>
+                    <label
+                      htmlFor="publishTime"
+                      className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300"
+                    >
+                      <Clock className="h-3.5 w-3.5 text-slate-400" />
+                      Schedule publish time
+                    </label>
+                    <input
+                      id="publishTime"
+                      type="datetime-local"
+                      value={publishTime}
+                      min={new Date().toISOString().slice(0, 16)}
+                      onChange={(e) => setPublishTime(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white"
+                    />
+                    <p className="mt-1.5 text-[11px] text-slate-400">
+                      Leave empty to keep the video unscheduled — you'll need to
+                      publish it manually.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -20,8 +20,10 @@ export interface VideoDetailResponse {
   isLiked: boolean | null
   isPublished: boolean
   createdAt: string
+  categoryId: string | null
+  tags: string[]
+  publishTime: string | null
 }
-
 export const videoDetails = async (videoId: string) => {
   try {
     const video = (
@@ -51,12 +53,12 @@ export const ownerVideoDetails = async (videoId: string) => {
 export const createVideoApi = async ({
   title,
   description,
-
+  categoryId,
   onUploadProgress,
 }: {
   title: string
   description: string
-
+  categoryId: string
   onUploadProgress?: (percent: number) => void
 }) => {
   const res = await axiosInstance.postForm(
@@ -64,6 +66,7 @@ export const createVideoApi = async ({
     {
       title,
       description,
+      categoryId,
     },
     {
       onUploadProgress: (progressEvent) => {
@@ -295,20 +298,22 @@ export const updateVideoStatus = async (videoId: string) => {
   return res.data
 }
 
+export interface UpdateVideoDetailsPayload {
+  title: string
+  description: string
+  categoryId?: string | null
+  tags?: string[]
+  publishTime?: string | null
+}
+
 export const updateVideoDetails = async (
   videoId: string,
-  {
-    title,
-    description,
-  }: {
-    title: string
-    description: string
-  }
+  payload: UpdateVideoDetailsPayload
 ) => {
-  const res = await axiosInstance.patch(`/api/v1/owner/videos/${videoId}`, {
-    title,
-    description,
-  })
+  const res = await axiosInstance.patch(
+    `/api/v1/owner/videos/${videoId}`,
+    payload
+  )
   return res.data
 }
 
