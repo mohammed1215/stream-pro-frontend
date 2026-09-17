@@ -21,7 +21,7 @@ export interface VideoDetailResponse {
   isPublished: boolean
   createdAt: string
   categoryId: string | null
-  tags: string[]
+  tags: { id: string; name: string }[]
   publishTime: string | null
 }
 export const videoDetails = async (videoId: string) => {

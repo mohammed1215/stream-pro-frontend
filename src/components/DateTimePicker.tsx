@@ -169,7 +169,7 @@ export const DateTimePicker = ({
                           }
                           ${
                             isSelected
-                              ? "!bg-cyan-600 !text-white dark:!bg-cyan-500"
+                              ? "bg-cyan-600! text-white! dark:bg-cyan-500!"
                               : "hover:bg-slate-100 dark:hover:bg-slate-800"
                           }
                           ${

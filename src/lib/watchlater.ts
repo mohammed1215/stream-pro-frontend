@@ -26,7 +26,7 @@ export interface WatchLaterResponse {
   videoCount: number
 }
 
-export const getWatchLater = async (limit: number, cursor?: string) => {
+export const getWatchLater = async (limit: number = 10, cursor?: string) => {
   const res = await axiosInstance.get<WatchLaterResponse>(
     "/api/v1/watchlaters",
     {

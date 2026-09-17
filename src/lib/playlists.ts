@@ -164,3 +164,24 @@ export const getPlaylistDetails = async (
     throw error
   }
 }
+
+export type VideoPlaylistOwner = { id: string; thumbnailUrl: string | null }
+
+export interface PlaylistOwnerDetailsDto {
+  videos: VideoPlaylistOwner[]
+  videoCount: number
+  id: string
+  title: string
+  description: string
+  isPublic: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export const getPlaylistsOwner = async () => {
+  return (
+    await axiosInstance.get<PlaylistOwnerDetailsDto[]>(
+      `/api/v1/owner/playlists`
+    )
+  ).data
+}

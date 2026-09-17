@@ -46,33 +46,31 @@ import {
 } from "../../../lib/comment"
 import { AxiosError } from "axios"
 import { useAuth } from "../../Auth/hooks/useAuth"
-import { PlaylistIcon } from "@vidstack/react/icons"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 
 import { CreatePlaylistModal } from "../../../components/CreatePlaylistModal"
-import {
-  DropdownWrapper,
-  SaveDropdown,
-} from "../../../components/features/SaveDropdown"
+import { DropdownWrapper } from "../../../components/features/SaveDropdown"
 import {
   getPlaylistDetails,
   type PlaylistItemDto,
 } from "../../../lib/playlists"
 import { useCommentApi } from "../../../hooks/useComment"
 import type { PaginatedType } from "../../../types/paginatedType"
+import { PlaylistPopover } from "../../../components/features/PlaylistPopover"
+import { getWatchLater } from "../../../lib/watchlater"
+import { getLikedVideos } from "../../../lib/likes"
 
 dayjs.extend(relativeTime)
 
-// 1️⃣ Type Definition للـ Related Video بناءً على الـ Response
 export interface RelatedVideo {
   videoId: string
   title: string
   videoUrl: string | null
   hlsUrl: string | null
-  thumbnailUrl: string
+  thumbnailUrl: string | null
   channelId: string
   channelTitle: string
-  channelImageUrl: string
+  channelImageUrl: string | null
   durationSeconds: number
   views: number
 }
@@ -169,7 +167,7 @@ function VideoPageSkeleton() {
           </div>
           <div className="h-32 w-full bg-muted rounded-xl" />
         </div>
-        <div className="w-full lg:w-[400px] space-y-4">
+        <div className="w-full lg:w-100 space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex gap-3">
               <div className="h-24 w-40 bg-muted rounded-lg shrink-0" />
@@ -442,7 +440,7 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line break-words">
+              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line wrap-break-word">
                 {comment.content}
               </p>
 
@@ -679,7 +677,6 @@ export const CommentsSection = ({
 
 export const VideoPage = () => {
   const navigate = useNavigate()
-  const user = useAuth((state) => state.user)
   const { videoId } = useParams()
   const queryClient = useQueryClient()
 
@@ -687,8 +684,6 @@ export const VideoPage = () => {
   const playlistId = params.get("list")
 
   const [openMoreVideoSettings, setOpenMoreVideoSettings] = useState(false)
-  const [openPlaylistDropdown, setOpenPlaylistDropdown] = useState(false)
-  const [openAddPlaylistModal, setOpenAddPlaylistModal] = useState(false)
 
   const [openDescription, setOpenDescription] = useState(false)
   const [commentInput, setCommentInput] = useState("")
@@ -792,7 +787,6 @@ export const VideoPage = () => {
     }
   )
 
-  // 2️⃣ تم تحديث الـ queryKey ليتغير بتغير الـ videoId وجلب حالة التحميل isLoadingRelated
   const { data: relatedVideos, isPending: isLoadingRelated } = useQuery<
     RelatedVideo[]
   >({
@@ -827,7 +821,25 @@ export const VideoPage = () => {
       if (!playlistId) return undefined
       return getPlaylistDetails(playlistId, {})
     },
-    enabled: !!playlistId,
+    enabled: !!playlistId && !["WLP", "LVP"].includes(playlistId),
+  })
+
+  const { data: watchLaterDetails } = useQuery({
+    queryKey: ["watchLater", playlistId],
+    queryFn: () => {
+      if (!playlistId) return undefined
+      return getWatchLater()
+    },
+    enabled: !!playlistId && playlistId === "WLP",
+  })
+
+  const { data: likedVideosDetails } = useQuery({
+    queryKey: ["liked-videos", playlistId],
+    queryFn: () => {
+      if (!playlistId) return undefined
+      return getLikedVideos()
+    },
+    enabled: !!playlistId && playlistId === "LVP",
   })
 
   function handleAddComment(e: React.FormEvent<HTMLFormElement>) {
@@ -994,28 +1006,7 @@ export const VideoPage = () => {
               {/* SAVE DROPDOWN */}
               {videoId && (
                 <div className="relative hidden sm:block">
-                  <motion.div
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="rounded-full gap-2 px-4 font-bold"
-                      onClick={() =>
-                        user
-                          ? setOpenPlaylistDropdown(!openPlaylistDropdown)
-                          : toast.error("Login to save videos")
-                      }
-                      aria-expanded={openPlaylistDropdown}
-                    >
-                      <PlaylistIcon className="h-5 w-5" /> Save
-                    </Button>
-                  </motion.div>
-                  <SaveDropdown
-                    videoId={videoId}
-                    isOpen={openPlaylistDropdown}
-                    onClose={() => setOpenPlaylistDropdown(false)}
-                  />
+                  <PlaylistPopover videoId={videoId} />
                 </div>
               )}
 
@@ -1070,14 +1061,14 @@ export const VideoPage = () => {
         </div>
 
         {/* RIGHT COLUMN */}
-        <aside className="w-full lg:w-[400px] shrink-0 space-y-6">
+        <aside className="w-full lg:w-100 shrink-0 space-y-6">
           {/* Playlist Videos Section */}
-          {playlistId && (
+          {playlistId && playlistId !== "WLP" && playlistId !== "LVP" && (
             <motion.div
               variants={itemFadeVariants}
               className="bg-card border border-border rounded-xl overflow-hidden shadow-sm"
             >
-              <div className="relative p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border">
+              <div className="relative p-4 bg-linear-to-br from-primary/10 via-primary/5 to-transparent border-b border-border">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1 min-w-0">
                     <h2 className="text-xl font-bold text-foreground line-clamp-2 mb-2">
@@ -1106,7 +1097,7 @@ export const VideoPage = () => {
                 </div>
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+              <div className="max-h-100 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
                 {playlistDetails?.items?.map(
                   (video: PlaylistItemDto, index: number) => {
                     const isCurrentVideo = video.videoId === currentVideoId
@@ -1178,7 +1169,181 @@ export const VideoPage = () => {
             </motion.div>
           )}
 
-          {/* 3️⃣ Up Next / Related Videos Section الفعلي */}
+          {playlistId && playlistId === "WLP" && (
+            <motion.div
+              variants={itemFadeVariants}
+              className="bg-card border border-border rounded-xl overflow-hidden shadow-sm"
+            >
+              <div className="relative p-4 bg-linear-to-br from-primary/10 via-primary/5 to-transparent border-b border-border">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold text-foreground line-clamp-2 mb-2">
+                      WatchLater
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>
+                        {currentIndex} / {watchLaterDetails?.items?.length || 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-h-100 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                {watchLaterDetails?.items?.map(({ video }, index: number) => {
+                  const isCurrentVideo = video.id === currentVideoId
+                  return (
+                    <motion.div
+                      key={video.id}
+                      whileHover={{ x: 3 }}
+                      transition={{ duration: 0.15 }}
+                      className={`group relative flex gap-3 p-3 cursor-pointer transition-colors duration-150 ${
+                        isCurrentVideo
+                          ? "bg-primary/10 border-l-4 border-l-primary"
+                          : "hover:bg-accent/50 border-l-4 border-l-transparent"
+                      }`}
+                      onClick={() => {
+                        navigate(`/videos/${video.id}?list=${playlistId}`)
+                      }}
+                    >
+                      <div className="flex items-center justify-center w-6 shrink-0 text-xs font-medium text-muted-foreground select-none">
+                        {isCurrentVideo ? (
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        ) : (
+                          <span>{index + 1}</span>
+                        )}
+                      </div>
+
+                      <div className="relative w-24 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 shadow-sm">
+                        {video.thumbnailUrl ? (
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                            No Thumbnail
+                          </div>
+                        )}
+
+                        {video.durationSeconds && (
+                          <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                            {formatDurationInSeconds(video.durationSeconds)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0 flex flex-col gap-1">
+                        <h3
+                          className={`font-medium text-sm line-clamp-2 leading-tight transition-colors ${
+                            isCurrentVideo
+                              ? "text-primary font-semibold"
+                              : "text-foreground group-hover:text-primary"
+                          }`}
+                        >
+                          {video.title}
+                        </h3>
+                        {video.channel.title && (
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {video.channel.title}
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+          {playlistId && playlistId === "LVP" && (
+            <motion.div
+              variants={itemFadeVariants}
+              className="bg-card border border-border rounded-xl overflow-hidden shadow-sm"
+            >
+              <div className="relative p-4 bg-linear-to-br from-primary/10 via-primary/5 to-transparent border-b border-border">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold text-foreground line-clamp-2 mb-2">
+                      Liked Videos
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>
+                        {currentIndex} /{" "}
+                        {likedVideosDetails?.items?.length || 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-h-100 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                {likedVideosDetails?.items?.map(({ video }, index: number) => {
+                  const isCurrentVideo = video.id === currentVideoId
+                  return (
+                    <motion.div
+                      key={video.id}
+                      whileHover={{ x: 3 }}
+                      transition={{ duration: 0.15 }}
+                      className={`group relative flex gap-3 p-3 cursor-pointer transition-colors duration-150 ${
+                        isCurrentVideo
+                          ? "bg-primary/10 border-l-4 border-l-primary"
+                          : "hover:bg-accent/50 border-l-4 border-l-transparent"
+                      }`}
+                      onClick={() => {
+                        navigate(`/videos/${video.id}?list=${playlistId}`)
+                      }}
+                    >
+                      <div className="flex items-center justify-center w-6 shrink-0 text-xs font-medium text-muted-foreground select-none">
+                        {isCurrentVideo ? (
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        ) : (
+                          <span>{index + 1}</span>
+                        )}
+                      </div>
+
+                      <div className="relative w-24 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 shadow-sm">
+                        {video.thumbnailUrl ? (
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                            No Thumbnail
+                          </div>
+                        )}
+
+                        {video.durationSeconds && (
+                          <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                            {formatDurationInSeconds(video.durationSeconds)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0 flex flex-col gap-1">
+                        <h3
+                          className={`font-medium text-sm line-clamp-2 leading-tight transition-colors ${
+                            isCurrentVideo
+                              ? "text-primary font-semibold"
+                              : "text-foreground group-hover:text-primary"
+                          }`}
+                        >
+                          {video.title}
+                        </h3>
+                        {video.channel.title && (
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {video.channel.title}
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
           <motion.div
             variants={itemFadeVariants}
             className="bg-card border border-border rounded-xl p-4 shadow-sm"
@@ -1202,7 +1367,6 @@ export const VideoPage = () => {
                   </div>
                 ))
               ) : relatedVideos && relatedVideos.length > 0 ? (
-                /* قائمة الفيديوهات المقترحة */
                 relatedVideos.map((video) => (
                   <motion.div
                     key={video.videoId}
@@ -1260,13 +1424,7 @@ export const VideoPage = () => {
         </aside>
       </main>
 
-      {createPortal(
-        <CreatePlaylistModal
-          open={openAddPlaylistModal}
-          onClose={() => setOpenAddPlaylistModal(false)}
-        />,
-        document.body
-      )}
+      {createPortal(<CreatePlaylistModal />, document.body)}
     </motion.div>
   )
 }

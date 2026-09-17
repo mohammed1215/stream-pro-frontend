@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { getPlaylists, type Playlist } from "../lib/playlists"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"

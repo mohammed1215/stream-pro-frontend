@@ -26,7 +26,7 @@ export interface LikedVideosResponse {
   videoCount: number
 }
 
-export const getLikedVideos = async (limit: number, cursor?: string) => {
+export const getLikedVideos = async (limit: number = 10, cursor?: string) => {
   const response = await axiosInstance.get<LikedVideosResponse>(
     `/api/v1/likes`,
     {

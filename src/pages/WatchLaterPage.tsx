@@ -180,6 +180,8 @@ export const WatchLaterPage = () => {
     initialPageParam: undefined as string | undefined,
   })
 
+  const navigate = useNavigate()
+
   const allItems = useMemo(
     () => watchLater?.pages.flatMap((page) => page.items) ?? [],
     [watchLater]
@@ -241,7 +243,13 @@ export const WatchLaterPage = () => {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-2.5 font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+              <button
+                onClick={() =>
+                  navigate(`/videos/${allItems[0].video.id}?list=WLP`)
+                }
+                disabled={allItems.length === 0}
+                className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-2.5 font-semibold hover:bg-primary/90 transition-colors shadow-sm"
+              >
                 <Play className="w-4 h-4" fill="currentColor" />
                 Play All
               </button>

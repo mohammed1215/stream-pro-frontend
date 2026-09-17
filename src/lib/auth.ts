@@ -39,9 +39,13 @@ export interface SignUpPayload {
 export interface SignUpResponse {
   success: true
   data: {
-    id: string
-    email: string
-    name: string
+    accessToken: string
+    user: {
+      id: string
+      email: string
+      name: string
+      avatarUrl: string | null
+    }
   }
 }
 

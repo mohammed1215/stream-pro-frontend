@@ -50,7 +50,7 @@ const VideoCard = ({
       </div>
 
       {/* Thumbnail */}
-      <div className="relative w-full sm:w-48 md:w-64 aspect-video rounded-lg overflow-hidden bg-muted flex-shrink-0 shadow-sm">
+      <div className="relative w-full sm:w-48 md:w-64 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 shadow-sm">
         <img
           src={item.thumbnailUrl}
           alt={item.title}
@@ -59,7 +59,7 @@ const VideoCard = ({
 
         {/* Duration Overlay */}
         <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
-          {formatDurationInSeconds(item.duration)}
+          {formatDurationInSeconds(item.durationSeconds)}
         </div>
       </div>
 
@@ -87,7 +87,7 @@ const VideoCard = ({
 
       {/* Remove Button */}
       <button
-        className="absolute top-2 right-2 sm:static sm:ml-auto p-2 rounded-full hover:bg-accent sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 text-muted-foreground hover:text-destructive"
+        className="absolute top-2 right-2 sm:static sm:ml-auto p-2 rounded-full hover:bg-accent sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0 text-muted-foreground hover:text-destructive"
         title="Remove from Playlist"
         onClick={(e) => {
           e.stopPropagation()
@@ -103,7 +103,7 @@ const VideoCard = ({
 const PlaylistSkeleton = () => (
   <div className="max-w-7xl mx-auto w-full px-4 py-8">
     <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-      <aside className="w-full lg:w-80 flex-shrink-0 space-y-6">
+      <aside className="w-full lg:w-80 shrink-0 space-y-6">
         <div className="aspect-square bg-muted rounded-xl animate-pulse" />
         <div className="flex gap-3">
           <div className="flex-1 h-11 bg-muted rounded-full animate-pulse" />
@@ -114,7 +114,7 @@ const PlaylistSkeleton = () => (
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex gap-4 p-2">
             <div className="hidden sm:block w-8 h-6 bg-muted rounded animate-pulse self-center" />
-            <div className="w-full sm:w-48 md:w-64 aspect-video bg-muted rounded-lg animate-pulse flex-shrink-0" />
+            <div className="w-full sm:w-48 md:w-64 aspect-video bg-muted rounded-lg animate-pulse shrink-0" />
             <div className="flex-1 space-y-3 py-1">
               <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
               <div className="h-4 w-1/3 bg-muted rounded animate-pulse" />
@@ -208,7 +208,7 @@ export const PlaylistPage = () => {
     <div className="max-w-7xl mx-auto w-full px-4 py-8">
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
         {/* Left Side: Sidebar */}
-        <aside className="w-full lg:w-80 flex-shrink-0">
+        <aside className="w-full lg:w-80 shrink-0">
           <div className="lg:sticky lg:top-6 space-y-6">
             {/* Playlist Cover */}
             <div className="relative aspect-square rounded-xl overflow-hidden bg-muted shadow-2xl shadow-black/20">
@@ -219,13 +219,13 @@ export const PlaylistPage = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-gradient-to-br from-muted to-muted/50">
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-linear-to-br from-muted to-muted/50">
                   <Clock className="w-16 h-16 opacity-50" />
                 </div>
               )}
 
               {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent" />
 
               {/* Overlay Text */}
               <div className="absolute bottom-0 left-0 p-6 text-white w-full">
@@ -256,7 +256,13 @@ export const PlaylistPage = () => {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-2.5 font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+              <button
+                onClick={() =>
+                  navigate(`/videos/${allItems[0].videoId}?list=${playlistId}`)
+                }
+                disabled={allItems.length === 0}
+                className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-2.5 font-semibold hover:bg-primary/90 transition-colors shadow-sm"
+              >
                 <Play className="w-4 h-4" fill="currentColor" />
                 Play All
               </button>

@@ -7,6 +7,9 @@ import { router } from "../router"
 import { useState } from "react"
 import { NotificationDropDown } from "./NotificationDroDown"
 import { useTheme } from "../hooks/useTheme"
+import { useCreateVideoModal } from "../hooks/useCreateVideo"
+import { usePlaylistModal } from "../hooks/usePlaylistModal"
+import { Content, Portal, Root, Trigger } from "@radix-ui/react-popover"
 
 interface SearchFormProps {
   value: string
@@ -53,6 +56,64 @@ export const SearchForm = ({
   )
 }
 
+const CreateModals = () => {
+  const { open: openCreateVideoModal } = useCreateVideoModal()
+  const { open: openCreatePlaylistModal } = usePlaylistModal()
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Root open={open} onOpenChange={setOpen}>
+      <Trigger asChild>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Button
+            size="icon"
+            className="h-9 w-9 cursor-pointer rounded-full bg-primary font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 sm:w-auto sm:gap-1.5 sm:px-4"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span className="hidden sm:inline">Create</span>
+          </Button>
+        </motion.div>
+      </Trigger>
+      <AnimatePresence>
+        {open && (
+          <Portal forceMount>
+            <Content className="z-50" align="start" sideOffset={8} asChild>
+              <div className="p-3 rounded-lg dark:bg-slate-900 flex flex-col gap-2">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    size="icon"
+                    className="h-9 w-9 cursor-pointer rounded-full bg-primary font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 sm:w-auto sm:gap-1.5 sm:px-4"
+                    onClick={() => openCreateVideoModal()}
+                  >
+                    <Plus className="h-4 w-4 stroke-[2.5]" />
+                    <span className="hidden sm:inline">Create Video</span>
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    size="icon"
+                    className="h-9 w-9 cursor-pointer rounded-full bg-primary font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 sm:w-auto sm:gap-1.5 sm:px-4"
+                    onClick={() => openCreatePlaylistModal()}
+                  >
+                    <Plus className="h-4 w-4 stroke-[2.5]" />
+                    <span className="hidden sm:inline">Create Playlist</span>
+                  </Button>
+                </motion.div>
+              </div>
+            </Content>
+          </Portal>
+        )}
+      </AnimatePresence>
+    </Root>
+  )
+}
+
 export const Header = ({
   isOpen,
   isClosed,
@@ -76,7 +137,6 @@ export const Header = ({
     router.navigate(`/search?q=${encodeURIComponent(query)}`)
   }
 
-  // شاشة البحث بتاعة الموبايل: بتاخد مكان الـ header كله مؤقتًا
   if (isMobileSearchOpen) {
     return (
       <header className="sticky top-0 z-50 flex items-center gap-2 border-b border-border/60 bg-background/95 px-3 py-2.5 backdrop-blur-md md:hidden">
@@ -101,7 +161,7 @@ export const Header = ({
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-2 border-b border-border/60 bg-background/95 px-3 py-2.5 backdrop-blur-md sm:px-6 sm:py-3">
-      {/* 1️⃣ Left: Sidebar/menu toggle & Logo */}
+      {/* Left: Sidebar/menu toggle & Logo */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
@@ -137,7 +197,7 @@ export const Header = ({
         </div>
       </div>
 
-      {/* 2️⃣ Center: Search Bar - desktop/tablet only */}
+      {/* Center: Search Bar - desktop/tablet only */}
       <div className="hidden flex-1 md:block">
         <SearchForm
           value={searchTerm}
@@ -146,7 +206,7 @@ export const Header = ({
         />
       </div>
 
-      {/* 3️⃣ Right: Actions & Profile */}
+      {/* Right: Actions & Profile */}
       <section className="flex shrink-0 items-center gap-1.5 sm:gap-3">
         {/* Search icon - mobile only */}
         <motion.div
@@ -166,15 +226,7 @@ export const Header = ({
         </motion.div>
 
         {/* Create Button */}
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button
-            size="icon"
-            className="h-9 w-9 cursor-pointer rounded-full bg-primary font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 sm:w-auto sm:gap-1.5 sm:px-4"
-          >
-            <Plus className="h-4 w-4 stroke-[2.5]" />
-            <span className="hidden sm:inline">Create</span>
-          </Button>
-        </motion.div>
+        <CreateModals />
 
         {/* Notifications */}
         <div className="relative">

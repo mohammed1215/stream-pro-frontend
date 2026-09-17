@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Header } from "../../../components/Header"
 import { PlaylistIcon } from "@vidstack/react/icons"
 import { CreatePlaylistModal } from "../../../components/CreatePlaylistModal"
+import { CreateVideoModal } from "../../../components/CreateVideoModal"
 
 interface NavItemData {
   name: string
@@ -347,6 +348,7 @@ export const SidebarLayout = () => {
       </nav>
 
       <CreatePlaylistModal />
+      <CreateVideoModal />
     </div>
   )
 }

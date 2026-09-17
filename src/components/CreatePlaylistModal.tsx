@@ -49,7 +49,7 @@ export const CreatePlaylistModal = () => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[999999] flex items-end justify-center sm:items-center sm:p-6">
+        <div className="fixed inset-0 z-999999 flex items-end justify-center sm:items-center sm:p-6">
           <motion.div
             className="absolute inset-0 bg-gray-950/45 backdrop-blur-[2px]"
             onClick={handleClose}

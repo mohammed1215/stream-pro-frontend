@@ -137,7 +137,7 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
           </div>
 
           <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-            <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500" />
+            <div className="h-full w-3/4 rounded-full bg-linear-to-r from-cyan-500 to-blue-500" />
           </div>
 
           <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
@@ -157,11 +157,7 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
 
 export const StudioLayout = () => {
   const user = useAuth((state) => state.user)
-  const {
-    isOpen: isVideoModalOpen,
-    open: openVideoModal,
-    close: closeVideoModal,
-  } = useCreateVideoModal()
+  const { open: openVideoModal } = useCreateVideoModal()
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const location = useLocation()
@@ -314,7 +310,7 @@ export const StudioLayout = () => {
       </div>
 
       <CreatePlaylistModal />
-      <CreateVideoModal isOpen={isVideoModalOpen} onClose={closeVideoModal} />
+      <CreateVideoModal />
     </div>
   )
 }

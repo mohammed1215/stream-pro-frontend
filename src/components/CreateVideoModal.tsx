@@ -26,6 +26,7 @@ import { useVideoUpload } from "../hooks/useVideoUpload"
 import axiosInstance from "../lib/api"
 import { useQuery } from "@tanstack/react-query"
 import { DateTimePicker } from "./DateTimePicker"
+import { useCreateVideoModal } from "../hooks/useCreateVideo"
 
 export function TagsInput({
   tags,
@@ -152,13 +153,7 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
   )
 }
 
-export const CreateVideoModal = ({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean
-  onClose: () => void
-}) => {
+export const CreateVideoModal = () => {
   const [step, setStep] = useState<Step>(1)
   const [direction, setDirection] = useState<1 | -1>(1)
   const [videoFile, setVideoFile] = useState<File | null>(null)
@@ -172,6 +167,8 @@ export const CreateVideoModal = ({
   const [isDragging, setIsDragging] = useState(false)
   const [isScheduled, setIsScheduled] = useState(false)
   const [publishTime, setPublishTime] = useState("")
+
+  const { isOpen, close } = useCreateVideoModal()
 
   const {
     uploadVideo,
@@ -192,12 +189,17 @@ export const CreateVideoModal = ({
   }, [])
 
   useEffect(() => {
-    if (!thumbnailFile) {
-      setThumbnailPreview(null)
-      return
+    function handleThumbnailFile() {
+      if (!thumbnailFile) {
+        setThumbnailPreview(null)
+        return
+      }
+      const url = URL.createObjectURL(thumbnailFile)
+      setThumbnailPreview(url)
+      return url
     }
-    const url = URL.createObjectURL(thumbnailFile)
-    setThumbnailPreview(url)
+    const url = handleThumbnailFile()
+    if (!url) return
     return () => URL.revokeObjectURL(url)
   }, [thumbnailFile])
 
@@ -225,7 +227,7 @@ export const CreateVideoModal = ({
       cancelUpload()
     }
     resetForm()
-    onClose()
+    close()
   }
 
   const { data: categories, isLoading: isCategoriesLoading } = useQuery({
@@ -316,7 +318,7 @@ export const CreateVideoModal = ({
       })
 
       resetForm()
-      onClose()
+      close()
     } catch (err: any) {
       if (err.name === "CanceledError" || err?.name === "AbortError") return
       const message =
@@ -397,7 +399,7 @@ export const CreateVideoModal = ({
 
             <StepIndicator currentStep={step} />
 
-            <div className="relative min-h-[360px]">
+            <div className="relative min-h-90">
               <AnimatePresence mode="wait" custom={direction}>
                 {/* ============ STEP 1: MEDIA ============ */}
                 {step === 1 && (
@@ -694,7 +696,7 @@ export const CreateVideoModal = ({
 
                         {selectedCategoryName && (
                           <div className="flex items-start gap-2 text-[11px]">
-                            <ChevronDown className="mt-0.5 h-3.5 w-3.5 shrink-0 rotate-[-90deg] text-slate-400" />
+                            <ChevronDown className="mt-0.5 h-3.5 w-3.5 shrink-0 -rotate-90 text-slate-400" />
                             <span className="text-slate-600 dark:text-slate-300">
                               {selectedCategoryName}
                             </span>

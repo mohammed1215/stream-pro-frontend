@@ -24,6 +24,7 @@ import {
 import { usePlaylistModal } from "../hooks/usePlaylistModal"
 import { useVideo } from "../hooks/useVideo"
 import { formatDurationInSeconds } from "../lib/helpers"
+import { getPlaylistsOwner } from "../lib/playlists"
 
 // ---------- Hooks ----------
 function useDebouncedValue<T>(value: T, delayMs: number): T {
@@ -516,8 +517,20 @@ export const VideosTable = ({
 }
 
 // ---------- Playlists Grid Component ----------
-const PlaylistsGrid = ({ playlists }: { playlists: StudioPlaylist[] }) => {
+const PlaylistsGrid = () => {
   const { open } = usePlaylistModal()
+  const { data: playlists, isPending } = useQuery({
+    queryKey: ["playlists"],
+    queryFn: () => getPlaylistsOwner(),
+  })
+
+  if (isPending) {
+    return (
+      <div className="flex h-48 items-center justify-center text-slate-400">
+        Loading playlists...
+      </div>
+    )
+  }
 
   return (
     <motion.div
@@ -548,53 +561,80 @@ const PlaylistsGrid = ({ playlists }: { playlists: StudioPlaylist[] }) => {
       </motion.button>
 
       {/* Playlist Cards */}
-      {playlists.map((pl) => (
-        <motion.div
-          key={pl.id}
-          variants={fadeUpItem}
-          whileHover={{ y: -3 }}
-          className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
-        >
-          <div className="relative aspect-video overflow-hidden bg-slate-950">
-            <img
-              src={pl.thumbnailUrl}
-              alt={pl.title}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-105 opacity-90"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+      {playlists?.map((pl) => {
+        const videos = pl.videos ?? []
 
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
-              <span className="flex items-center gap-1.5 rounded-lg bg-black/60 px-2 py-1 font-mono text-[10px] font-bold backdrop-blur-md">
-                <ListVideo className="h-3 w-3 text-cyan-400" />
-                {pl.videoCount} videos
-              </span>
-              <span
-                className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                  pl.isPublic
-                    ? "bg-emerald-500/80 text-white"
-                    : "bg-slate-700/80 text-slate-200"
-                }`}
-              >
-                {pl.isPublic ? "Public" : "Private"}
-              </span>
-            </div>
-          </div>
+        return (
+          <motion.div
+            key={pl.id}
+            variants={fadeUpItem}
+            whileHover={{ y: -3 }}
+            className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
+          >
+            <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl bg-slate-950 flex items-center justify-center p-3">
+              {videos.length > 0 ? (
+                videos.slice(0, 3).map((video, index) => {
+                  const depth = index
+                  const offset = depth * 10
 
-          <div className="p-4">
-            <h4 className="truncate text-sm font-bold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-              {pl.title}
-            </h4>
-            <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
-              <Clock className="h-3 w-3" />
-              <span>Updated recently</span>
+                  return (
+                    <img
+                      key={video.id}
+                      src={video.thumbnailUrl}
+                      alt={index === 0 ? pl.title : ""}
+                      aria-hidden={index !== 0}
+                      className="absolute h-[80%] w-[85%] rounded-xl border border-slate-800/60 object-cover shadow-lg transition-transform duration-300"
+                      style={{
+                        zIndex: 3 - index,
+                        transform: `translate(${offset}px, ${-offset}px)`,
+                        opacity: 1 - depth * 0.1,
+                      }}
+                    />
+                  )
+                })
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-slate-600">
+                  <ListVideo className="h-8 w-8" />
+                </div>
+              )}
+
+              {/* Gradient Overlay */}
+              <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+              {/* Playlist Stats / Badge */}
+              <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between text-white">
+                <span className="flex items-center gap-1.5 rounded-lg bg-black/60 px-2 py-1 font-mono text-[10px] font-bold backdrop-blur-md">
+                  <ListVideo className="h-3 w-3 text-cyan-400" />
+                  {pl.videoCount} videos
+                </span>
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    pl.isPublic
+                      ? "bg-emerald-500/80 text-white"
+                      : "bg-slate-700/80 text-slate-200"
+                  }`}
+                >
+                  {pl.isPublic ? "Public" : "Private"}
+                </span>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      ))}
+
+            {/* Title & Info */}
+            <div className="p-4">
+              <h4 className="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-400">
+                {pl.title}
+              </h4>
+              <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
+                <Clock className="h-3 w-3" />
+                <span>Updated recently</span>
+              </div>
+            </div>
+          </motion.div>
+        )
+      })}
     </motion.div>
   )
 }
-
 // ---------- Main Page Component ----------
 type ContentTab = "videos" | "playlists"
 
