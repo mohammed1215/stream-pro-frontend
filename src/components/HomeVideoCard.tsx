@@ -12,7 +12,7 @@ export type VideoCardVideo = {
   id?: string
   title?: string
   thumbnailUrl?: string
-  durationSeconds?: number
+  duration?: number
   views?: number
   createdAt?: string
   channelId?: string
@@ -67,7 +67,7 @@ export const HomeVideoCard = ({
       transition={{ duration: 0.2, ease: "easeOut" }}
       className="group relative flex flex-col"
     >
-      {/* 1. Thumbnail Link */}
+      {/* Thumbnail Link */}
       <Link
         to={video.id ? `/videos/${video.id}` : "#"}
         onClick={(e) => !video.id && e.preventDefault()}
@@ -96,15 +96,15 @@ export const HomeVideoCard = ({
           </div>
 
           {/* Duration Badge */}
-          {video.durationSeconds ? (
+          {video.duration || video.duration === 0 ? (
             <span className="absolute bottom-2.5 right-2.5 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-semibold tracking-wider text-white shadow-sm backdrop-blur-md">
-              {formatDurationInSeconds(video.durationSeconds)}
+              {formatDurationInSeconds(video.duration)}
             </span>
           ) : null}
         </div>
       </Link>
 
-      {/* 2. Video Meta Bar */}
+      {/* Video Meta Bar */}
       <div className="flex gap-3 pt-3">
         {/* Channel Avatar */}
         <Link
