@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app"
 import { getMessaging, getToken, onMessage } from "firebase/messaging"
-import { queryClient } from "../main"
+import { queryClient } from "../lib/queryClient"
 
 export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,

@@ -203,9 +203,14 @@ export const CustomVideoPlayer = ({
       queryClient.invalidateQueries({ queryKey: ["video-details"] }),
   })
 
+  const differenceInTimeToSend =
+    duration < 60 ? Math.trunc(duration * 0.4) : Math.trunc(duration * 0.1)
+  console.log(duration)
+  console.log(differenceInTimeToSend, "differenceInTimeToSend")
+
   useEffect(() => {
     if (
-      currentTime - lastSentRef.current >= 15 ||
+      currentTime - lastSentRef.current >= differenceInTimeToSend ||
       currentTime === 0 ||
       currentTime === duration
     ) {

@@ -246,11 +246,7 @@ export const Header = ({
         </div>
 
         {/* Theme Toggle Button - hidden on very small screens to save space */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="hidden xs:block"
-        >
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="ghost"
             size="icon"

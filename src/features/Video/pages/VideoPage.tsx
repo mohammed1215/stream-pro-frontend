@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
+  Flag,
   Globe,
   ListVideo,
   Loader2,
@@ -59,6 +60,8 @@ import type { PaginatedType } from "../../../types/paginatedType"
 import { PlaylistPopover } from "../../../components/features/PlaylistPopover"
 import { getWatchLater } from "../../../lib/watchlater"
 import { getLikedVideos } from "../../../lib/likes"
+import axiosInstance from "../../../lib/api"
+import { useToastCustom } from "../../../hooks/useToastCustom"
 
 dayjs.extend(relativeTime)
 
@@ -112,23 +115,108 @@ const commentItemVariants: Variants = {
 
 function MoreOptionsDropdown({
   isOpen,
+  videoId,
   onClose,
 }: {
   isOpen: boolean
   onClose: () => void
+  videoId?: string
 }) {
+  const { error } = useToastCustom()
+
+  const handleSaveFile = (blobData: Blob, fileName = "video.mp4") => {
+    const url = window.URL.createObjectURL(blobData)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", fileName)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const downloadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await axiosInstance.get(`/api/v1/downloads/${id}`, {
+        skipErrorToast: true,
+        responseType: "blob",
+      })
+      return response.data
+    },
+    onSuccess: (data) => {
+      handleSaveFile(data, `video-${videoId}.mp4`)
+    },
+    onError: async (err: any) => {
+      try {
+        const rawText =
+          err.response?.data instanceof Blob
+            ? await err.response.data.text()
+            : err.response?.data?.message ?? "{}"
+
+        const parsed = JSON.parse(rawText)
+        const rawMessage = parsed?.message ?? rawText
+
+        const cleaned = rawMessage
+          .replace("Cloudinary fetch failed (404): ", "")
+          .split("-")[0]
+          .trim()
+
+        error(cleaned)
+      } catch {
+        error("Failed to download video")
+      }
+    },
+  })
+
+  const handleDownloadClick = () => {
+    if (videoId && !downloadMutation.isPending) {
+      downloadMutation.mutate(videoId)
+    }
+  }
+
   return (
     <DropdownWrapper isOpen={isOpen} onClose={onClose}>
-      <button
-        type="button"
-        className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent transition-colors"
-        onClick={() => {
-          toast.info("Report feature coming soon.")
-          onClose()
-        }}
-      >
-        Report
-      </button>
+      <div className="p-1 min-w-[180px] space-y-0.5">
+        {/* 1️⃣ SAVE TO PLAYLIST */}
+        {videoId && (
+          <div className="hidden sm:block">
+            <PlaylistPopover videoId={videoId} />
+          </div>
+        )}
+
+        {/* 2️⃣ DOWNLOAD ITEM */}
+        <button
+          type="button"
+          onClick={handleDownloadClick}
+          disabled={downloadMutation.isPending}
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {downloadMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : (
+            <Download className="h-4 w-4 text-muted-foreground" />
+          )}
+          <span>
+            {downloadMutation.isPending ? "Downloading..." : "Download"}
+          </span>
+        </button>
+
+        {/* فاصل جمالي بسيط */}
+        <div className="my-1 border-t border-border/60" />
+
+        {/* 3️⃣ REPORT ITEM */}
+        <button
+          type="button"
+          onClick={() => {
+            toast.info("Report feature coming soon.")
+            onClose()
+          }}
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+        >
+          <Flag className="h-4 w-4" />
+          <span>Report</span>
+        </button>
+      </div>
     </DropdownWrapper>
   )
 }
@@ -990,26 +1078,6 @@ export const VideoPage = () => {
                 </Button>
               </motion.div>
 
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="hidden sm:block"
-              >
-                <Button
-                  variant="secondary"
-                  className="rounded-full gap-2 px-4 font-bold"
-                >
-                  <Download className="h-5 w-5" /> Download
-                </Button>
-              </motion.div>
-
-              {/* SAVE DROPDOWN */}
-              {videoId && (
-                <div className="relative hidden sm:block">
-                  <PlaylistPopover videoId={videoId} />
-                </div>
-              )}
-
               {/* MORE OPTIONS DROPDOWN */}
               <div className="relative">
                 <motion.div
@@ -1030,6 +1098,7 @@ export const VideoPage = () => {
                 </motion.div>
                 <MoreOptionsDropdown
                   isOpen={openMoreVideoSettings}
+                  videoId={videoId}
                   onClose={() => setOpenMoreVideoSettings(false)}
                 />
               </div>

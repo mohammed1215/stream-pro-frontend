@@ -190,6 +190,7 @@ function WatchLaterItem({
     </button>
   )
 }
+const MotionButton = motion(Button)
 
 export const PlaylistPopover = ({ videoId }: { videoId: string }) => {
   const user = useAuth((state) => state.user)
@@ -206,18 +207,19 @@ export const PlaylistPopover = ({ videoId }: { videoId: string }) => {
   return (
     <Root open={open} onOpenChange={setOpen}>
       <Trigger asChild>
-        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-          <Button
-            variant="ghost"
-            className="rounded-full gap-2 px-4 font-bold"
-            onClick={() =>
-              user ? setOpen(!open) : toast.error("Login to save videos")
+        <MotionButton
+          variant="secondary"
+          className="h-9 px-3.5 w-full bg-transparent! hover:bg-secondary! text-start! justify-start text-sm font-medium gap-2 transition-colors border border-border/40"
+          onClick={(e) => {
+            if (!user) {
+              e.preventDefault()
+              toast.error("Login to save videos")
             }
-            aria-expanded={open}
-          >
-            <PlaylistIcon className="h-5 w-5" /> Save
-          </Button>
-        </motion.div>
+          }}
+        >
+          <PlaylistIcon className="h-4 w-4 text-muted-foreground" />
+          <span>Save</span>
+        </MotionButton>
       </Trigger>
 
       <AnimatePresence>
