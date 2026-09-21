@@ -27,8 +27,8 @@ interface VideoSuggestion {
 }
 
 interface SearchResponse {
-  videos: { items: VideoSuggestion[] } | VideoSuggestion[]
-  trendingTerms: { term: string; count: bigint }[]
+  videos: { items: VideoSuggestion[] }
+  trendingTerms: { term: string; count: number }[]
 }
 
 export const SearchWithSuggestions = ({
@@ -42,20 +42,19 @@ export const SearchWithSuggestions = ({
 
   const { data } = useQuery({
     queryKey: ["suggestions", debouncedValue],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       axiosInstance
         .get<SearchResponse>("/api/v1/search/term-suggestions", {
           params: { query: debouncedValue },
+          signal,
         })
         .then((res) => res.data),
-    enabled: debouncedValue.trim().length > 1,
+    enabled: (debouncedValue?.trim().length ?? 0) > 1,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 
-  const videoList = Array.isArray(data?.videos)
-    ? data.videos
-    : (data?.videos as any)?.items || []
+  const videoList = data?.videos?.items || []
 
   const trendingList = data?.trendingTerms || []
 
@@ -122,7 +121,7 @@ export const SearchWithSuggestions = ({
                   type="button"
                   onMouseDown={(e) => {
                     e.preventDefault()
-                    goTo(`/watch/${video.id}`)
+                    goTo(`/videos/${video.id}`)
                   }}
                   className="flex w-full items-center gap-3 px-4 py-2 hover:bg-muted text-left"
                 >

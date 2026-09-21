@@ -90,12 +90,5 @@ export const router = createBrowserRouter([
         ],
       },
     ],
-    ErrorBoundary: () => (
-      <div className="flex h-screen w-full items-center justify-center">
-        <h1 className="text-2xl font-bold text-red-500">
-          Something went wrong, please try again later.
-        </h1>
-      </div>
-    ),
   },
 ])

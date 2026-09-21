@@ -54,7 +54,7 @@ const VideoCard = ({
         />
 
         {/* Duration Overlay */}
-        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
+        <div className="absolute bottom-2 right-2 bg-black/80 text-primary-foreground text-xs font-medium px-1.5 py-0.5 rounded">
           {formatDurationInSeconds(item.video.durationSeconds)}
         </div>
       </div>
@@ -223,7 +223,7 @@ export const LikedVideosPage = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
               {/* Overlay Text */}
-              <div className="absolute bottom-0 left-0 p-6 text-white w-full">
+              <div className="absolute bottom-0 left-0 p-6 text-primary-foreground w-full">
                 <div className="flex items-center gap-2 mb-2 opacity-90">
                   <ListVideo className="w-4 h-4" />
                   <span className="text-xs font-semibold uppercase tracking-wider">
@@ -233,7 +233,7 @@ export const LikedVideosPage = () => {
                 <h1 className="text-3xl font-bold tracking-tight leading-tight">
                   Liked Videos
                 </h1>
-                <div className="flex items-center gap-2 mt-3 text-sm text-white/80">
+                <div className="flex items-center gap-2 mt-3 text-sm text-primary-foreground/80">
                   <img
                     src={
                       user?.avatarUrl ||
@@ -243,7 +243,7 @@ export const LikedVideosPage = () => {
                     className="w-6 h-6 rounded-full ring-1 ring-white/20"
                   />
                   <span>{user?.name}</span>
-                  <span className="text-white/40">•</span>
+                  <span className="text-primary-foreground/40">•</span>
                   <span>{videoCount} videos</span>
                 </div>
               </div>

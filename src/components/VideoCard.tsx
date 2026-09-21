@@ -25,7 +25,7 @@ export const VideoCard = ({ video }: { video: VideoResponse }) => {
             </span>
           </div>
         )}
-        <span className="absolute bottom-0 right-0 bg-accent text-accent-foreground text-xs font-medium px-2 py-1 rounded-tl-lg">
+        <span className="absolute bottom-0 right-0 bg-black/80 text-white text-xs font-medium px-2 py-1 rounded-tl-lg">
           {formatDurationInSeconds(video.durationSeconds)}
         </span>
       </div>
@@ -38,7 +38,7 @@ export const VideoCard = ({ video }: { video: VideoResponse }) => {
           size={15}
         />
         <div className="">
-          <h5 className="mb-2 text-md font-bold tracking-tight line-clamp-2 text-gray-900 dark:text-white">
+          <h5 className="mb-2 text-md font-bold tracking-tight line-clamp-2 text-gray-900 dark:text-primary-foreground">
             {video.title}
           </h5>
 

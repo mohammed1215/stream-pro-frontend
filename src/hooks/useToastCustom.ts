@@ -7,7 +7,7 @@ export const useToastCustom = () => {
       style: {
         border: "1px solid green",
         backgroundColor: "green",
-        color: "text-white",
+        color: "text-primary-foreground",
       },
       position,
     })
@@ -19,7 +19,7 @@ export const useToastCustom = () => {
       style: {
         border: "1px solid red",
         backgroundColor: "red",
-        color: "text-white",
+        color: "text-primary-foreground",
       },
       position,
     })

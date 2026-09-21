@@ -35,7 +35,7 @@ function getNotificationMeta(type: NotificationType) {
     case "LIKE":
       return {
         Icon: Heart,
-        className: "border-rose-500/20 bg-rose-500/10 text-rose-500",
+        className: "border-rose-500/20 bg-destructive/10 text-rose-500",
         label: "Like",
       }
     case "COMMENT":

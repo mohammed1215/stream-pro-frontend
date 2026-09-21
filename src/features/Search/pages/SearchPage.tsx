@@ -37,12 +37,12 @@ dayjs.extend(relativeTime)
 const PAGE_SIZE = 12
 
 const HOVER_COLORING = [
-  "hover:bg-rose-500/10 dark:hover:bg-rose-500/15",
+  "hover:bg-destructive/10 dark:hover:bg-destructive/15",
   "hover:bg-emerald-500/10 dark:hover:bg-emerald-500/15",
   "hover:bg-sky-500/10 dark:hover:bg-sky-500/15",
   "hover:bg-amber-500/10 dark:hover:bg-amber-500/15",
   "hover:bg-violet-500/10 dark:hover:bg-violet-500/15",
-  "hover:bg-cyan-500/10 dark:hover:bg-cyan-500/15",
+  "hover:bg-primary/90/10 dark:hover:bg-primary/90/15",
 ]
 
 function getSafePage(value: string | null) {
@@ -326,7 +326,7 @@ function SearchVideoCard({
 
         {/* Duration badge */}
         {video.durationSeconds > 0 && (
-          <span className="absolute bottom-2 right-2 rounded-md bg-black/80 px-2 py-1 text-xs font-bold text-white backdrop-blur-sm">
+          <span className="absolute bottom-2 right-2 rounded-md bg-black/80 px-2 py-1 text-xs font-bold text-primary-foreground backdrop-blur-sm">
             {formatDurationInSeconds(video.durationSeconds)}
           </span>
         )}

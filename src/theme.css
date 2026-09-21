@@ -1,0 +1,93 @@
+:root {
+  /* Surface & Base */
+  --background: #ffffff;
+  --foreground: #0f172a; /* Slate 900 */
+  --background-secondary: #f1f5f9; /* Slate 100 */
+  --background-secondary-hover: #e2e8f0; /* Slate 200 */
+  --text-foreground: #0f172a;
+
+  --border: #e2e8f0; /* Slate 200 */
+  --input: #e2e8f0;
+  --ring: #0ea5e9;
+
+  /* Primary Brand (Sky / Tech Blue) */
+  --primary: #0284c7; /* Sky 600 */
+  --primary-foreground: #ffffff;
+
+  /* Secondary Neutral Surface */
+  --secondary: #f1f5f9; /* Slate 100 */
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9; /* Slate 100 */
+  --muted-foreground: #64748b; /* Slate 500 */
+
+  /* Accents */
+  --accent: #0ea5e9; /* Sky 500 */
+  --accent-hover: #0284c7;
+  --accent-ui: #e0f2fe; /* Sky 100 */
+  --accent-foreground: #0369a1; /* Sky 700 */
+  --accent-bg: rgba(14, 165, 233, 0.1);
+  --accent-border: rgba(14, 165, 233, 0.3);
+
+  --destructive: #ef4444;
+  --radius: 0.75rem;
+
+  /* Typography & Legacy fallbacks */
+  --text: #64748b;
+  --text-h: #0f172a;
+  --text-secondary: #64748b;
+  --bg: #ffffff;
+  --code-bg: #f1f5f9;
+  --social-bg: rgba(241, 245, 249, 0.8);
+
+  --shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05),
+    0 4px 6px -2px rgba(15, 23, 42, 0.03);
+}
+
+/* ============================================
+   DARK THEME
+   ============================================ */
+.dark {
+  /* Surface & Base */
+  --background: #020617; /* Slate 950 */
+  --foreground: #f8fafc; /* Slate 50 */
+  --background-secondary: #0f172a; /* Slate 900 */
+  --background-secondary-hover: #1e293b; /* Slate 800 */
+  --text-foreground: #f8fafc;
+
+  --border: #1e293b; /* Slate 800 */
+  --input: #1e293b;
+  --ring: #38bdf8; /* Sky 400 */
+
+  /* Primary Brand */
+  --primary: #38bdf8; /* Sky 400 */
+  --primary-foreground: #020617;
+
+  /* Secondary Surface */
+  --secondary: #0f172a;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #0f172a;
+  --muted-foreground: #94a3b8; /* Slate 400 */
+
+  /* Accents */
+  --accent: #38bdf8; /* Sky 400 */
+  --accent-hover: #7dd3fc;
+  --accent-ui: #0c4a6e; /* Sky 900 */
+  --accent-foreground: #e0f2fe; /* Sky 100 */
+  --accent-bg: rgba(56, 189, 248, 0.15);
+  --accent-border: rgba(56, 189, 248, 0.4);
+
+  --destructive: #f87171;
+
+  /* Typography & Legacy fallbacks */
+  --text: #94a3b8;
+  --text-h: #f8fafc;
+  --text-secondary: #94a3b8;
+  --bg: #020617;
+  --code-bg: #0f172a;
+  --social-bg: rgba(15, 23, 42, 0.8);
+
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4),
+    0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}

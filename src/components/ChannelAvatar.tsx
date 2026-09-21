@@ -24,7 +24,7 @@ export const ChannelAvatar = ({
         />
       ) : (
         <div className="  flex items-center justify-center text-lg font-semibold">
-          <span className="text-red-500">
+          <span className="text-destructive">
             {channelName.charAt(0).toUpperCase()}
           </span>
         </div>

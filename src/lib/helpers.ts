@@ -1,4 +1,3 @@
-import { Check, X } from "lucide-react"
 import type { GroupedWatchHistory } from "./watchHistory"
 
 export const formatDurationInMilli = (duration: number): string => {
@@ -87,36 +86,4 @@ export function mergeGroupedHistory(
   }
 
   return mergedGroups
-}
-
-import { toast, type ToastPosition } from "react-toastify"
-
-export const toastCustom = () => {
-  function success(content: string, position: ToastPosition = "bottom-center") {
-    toast(content, {
-      icon: Check,
-      type: "success",
-      style: {
-        border: "1px solid green",
-        backgroundColor: "green",
-        color: "white",
-      },
-      position,
-    })
-  }
-
-  function error(content: string, position: ToastPosition = "bottom-center") {
-    toast(content, {
-      icon: X,
-      type: "error",
-      style: {
-        border: "1px solid red",
-        backgroundColor: "red",
-        color: "white",
-      },
-      position,
-    })
-  }
-
-  return { success, error }
 }

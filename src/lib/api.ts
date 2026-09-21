@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios"
-import { toastCustom } from "./helpers"
+import { toastCustom } from "./helper"
 import { refreshToken } from "./auth"
 
 const axiosInstance = axios.create({

@@ -114,19 +114,19 @@ const StudioContentCard = ({
     <motion.div
       variants={fadeUpItem}
       whileHover={{ y: -2 }}
-      className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-slate-700"
+      className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md /80 dark:bg-slate-900/60 dark:hover:border-slate-700"
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {title}
         </span>
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition group-hover:bg-cyan-500/10 group-hover:text-cyan-600 dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-cyan-500/10 dark:group-hover:text-cyan-400">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-slate-700 transition group-hover:bg-primary/90/10 group-hover:text-primary  dark:text-slate-300 dark:group-hover:bg-primary/90/10 dark:group-hover:text-cyan-400">
           <Icon className="h-4 w-4" />
         </div>
       </div>
 
       <div className="mt-3 flex items-baseline gap-2">
-        <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-primary-foreground">
           {typeof number === "number" ? number.toLocaleString() : number}
         </h3>
         {spanWord && (
@@ -134,7 +134,7 @@ const StudioContentCard = ({
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800/80">
+      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 /80">
         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
           {description}
         </p>
@@ -163,7 +163,7 @@ const StatusPill = ({ isPublished }: { isPublished: boolean }) => (
     className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
       isPublished
         ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-500/30"
-        : "bg-slate-100 text-slate-600 ring-1 ring-slate-400/20 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700"
+        : "bg-secondary text-slate-600 ring-1 ring-slate-400/20  dark:text-slate-400 dark:ring-slate-700"
     }`}
   >
     <span
@@ -196,7 +196,7 @@ const ContentToolbar = ({
   onSortChange: (v: SortOption) => void
   totalCount: number
 }) => (
-  <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+  <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/80 bg-white p-3 shadow-sm /80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
     {/* Search Input */}
     <div className="relative min-w-[220px] flex-1">
       <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -205,7 +205,7 @@ const ContentToolbar = ({
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder="Filter your videos by title..."
-        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-9 pr-4 text-xs font-medium text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:bg-slate-950"
+        className="w-full rounded-xl border border-border bg-slate-50/60 py-2 pl-9 pr-4 text-xs font-medium text-slate-900 placeholder-slate-400 outline-none transition focus:border-ring focus:bg-white focus:ring-2 focus:ring-ring/20  dark:bg-slate-950/60 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:bg-slate-950"
       />
     </div>
 
@@ -214,7 +214,7 @@ const ContentToolbar = ({
       <select
         value={status}
         onChange={(e) => onStatusChange(e.target.value as StatusFilter)}
-        className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300"
+        className="rounded-xl border border-border bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20  dark:bg-slate-950/60 dark:text-slate-300"
       >
         <option value="ALL">All Visibility</option>
         <option value="PUBLISHED">Public</option>
@@ -225,7 +225,7 @@ const ContentToolbar = ({
       <select
         value={sort}
         onChange={(e) => onSortChange(e.target.value as SortOption)}
-        className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300"
+        className="rounded-xl border border-border bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20  dark:bg-slate-950/60 dark:text-slate-300"
       >
         <option value="NEWEST">Date: Newest</option>
         <option value="OLDEST">Date: Oldest</option>
@@ -235,7 +235,7 @@ const ContentToolbar = ({
 
     {/* Video Counter */}
     <div className="ml-auto hidden items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 sm:flex">
-      <span className="inline-flex h-6 items-center justify-center rounded-lg bg-cyan-50 px-2 font-mono text-xs font-bold text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400">
+      <span className="inline-flex h-6 items-center justify-center rounded-lg bg-accent px-2 font-mono text-xs font-bold text-accent-foreground /10 ">
         {totalCount}
       </span>
       <span>videos</span>
@@ -245,27 +245,27 @@ const ContentToolbar = ({
 
 // ---------- Skeleton Loader ----------
 const SkeletonRow = () => (
-  <tr className="animate-pulse border-b border-slate-100 dark:border-slate-800/60">
+  <tr className="animate-pulse border-b border-slate-100 /60">
     <td className="px-6 py-4">
       <div className="flex items-center gap-4">
-        <div className="h-16 w-28 shrink-0 rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-16 w-28 shrink-0 rounded-xl bg-slate-200 " />
         <div className="space-y-2">
-          <div className="h-4 w-44 rounded-lg bg-slate-200 dark:bg-slate-800" />
-          <div className="h-3 w-24 rounded-lg bg-slate-100 dark:bg-slate-850" />
+          <div className="h-4 w-44 rounded-lg bg-slate-200 " />
+          <div className="h-3 w-24 rounded-lg bg-secondary dark:bg-slate-850" />
         </div>
       </div>
     </td>
     <td className="px-6 py-4">
-      <div className="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
+      <div className="h-6 w-16 rounded-full bg-slate-200 " />
     </td>
     <td className="px-6 py-4">
-      <div className="h-4 w-12 rounded bg-slate-200 dark:bg-slate-800" />
+      <div className="h-4 w-12 rounded bg-slate-200 " />
     </td>
     <td className="px-6 py-4">
-      <div className="h-4 w-10 rounded bg-slate-200 dark:bg-slate-800" />
+      <div className="h-4 w-10 rounded bg-slate-200 " />
     </td>
     <td className="px-6 py-4 text-right">
-      <div className="ml-auto h-7 w-7 rounded-lg bg-slate-200 dark:bg-slate-800" />
+      <div className="ml-auto h-7 w-7 rounded-lg bg-slate-200 " />
     </td>
   </tr>
 )
@@ -289,18 +289,18 @@ const VideoRow = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -10 }}
       transition={{ duration: 0.2, delay: Math.min(index, 6) * 0.02 }}
-      className="group border-b border-slate-100 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-900/40"
+      className="group border-b border-slate-100 transition-colors hover:bg-slate-50/80 /60 dark:hover:bg-slate-900/40"
     >
       {/* Video Thumbnail & Info */}
       <td className="px-6 py-3.5">
         <div className="flex items-center gap-4">
-          <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition group-hover:border-cyan-500/40 dark:border-slate-800 dark:bg-slate-950">
+          <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-xl border border-border bg-secondary shadow-sm transition group-hover:border-cyan-500/40  dark:bg-slate-950">
             <img
               src={video.thumbnailUrl}
               alt={video.title}
               className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
             />
-            <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white backdrop-blur-sm">
+            <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary-foreground backdrop-blur-sm">
               {formatDurationInSeconds(video.durationSeconds)}
             </span>
           </div>
@@ -308,7 +308,7 @@ const VideoRow = ({
           <div className="min-w-0 flex-1">
             <button
               onClick={onEdit}
-              className="truncate text-left text-sm font-semibold text-slate-900 transition hover:text-cyan-600 dark:text-white dark:hover:text-cyan-400 block max-w-md"
+              className="truncate text-left text-sm font-semibold text-slate-900 transition hover:text-primary dark:text-primary-foreground dark:hover:text-cyan-400 block max-w-md"
             >
               {video.title || "Untitled video"}
             </button>
@@ -342,7 +342,7 @@ const VideoRow = ({
           <button
             onClick={onEdit}
             title="Edit details"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-cyan-500 hover:text-cyan-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-400"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-600 shadow-sm transition hover:border-cyan-500 hover:text-primary  dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-400"
           >
             <Edit3 className="h-3.5 w-3.5" />
           </button>
@@ -353,7 +353,7 @@ const VideoRow = ({
               target="_blank"
               rel="noreferrer"
               title="Watch video"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-cyan-500 hover:text-cyan-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-400"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-600 shadow-sm transition hover:border-cyan-500 hover:text-primary  dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-400"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
@@ -362,7 +362,7 @@ const VideoRow = ({
           <button
             onClick={onDelete}
             title="Delete video"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-rose-500/40 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-600 shadow-sm transition hover:border-rose-500 hover:bg-rose-50 hover:text-rose-600  dark:bg-slate-900 dark:text-slate-300 dark:hover:border-rose-500/40 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -421,7 +421,7 @@ export const VideosTable = ({
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50">
+      <div className="overflow-hidden rounded-2xl border border-border/80 bg-white shadow-sm /80 dark:bg-slate-900/50">
         <table className="w-full border-collapse">
           <tbody>
             {[...Array(5)].map((_, i) => (
@@ -446,12 +446,12 @@ export const VideosTable = ({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white/50 py-20 text-center dark:border-slate-800 dark:bg-slate-900/30"
+        className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-white/50 py-20 text-center  dark:bg-slate-900/30"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-400">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-primary /10 ">
           <Film className="h-6 w-6" />
         </div>
-        <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
+        <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-primary-foreground">
           {totalCount === 0
             ? "No videos uploaded yet"
             : "No videos match your query"}
@@ -466,11 +466,11 @@ export const VideosTable = ({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+    <div className="overflow-hidden rounded-2xl border border-border/80 bg-white shadow-sm /80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/75 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-400">
+            <tr className="border-b border-border/80 bg-slate-50/75 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 /80 dark:bg-slate-950/40 dark:text-slate-400">
               <th className="px-6 py-3.5">Video</th>
               <th className="px-6 py-3.5">Visibility</th>
               <th className="px-6 py-3.5">Views</th>
@@ -495,11 +495,11 @@ export const VideosTable = ({
       </div>
 
       {hasNextPage && (
-        <div className="flex justify-center border-t border-slate-100 p-4 dark:border-slate-800/60">
+        <div className="flex justify-center border-t border-slate-100 p-4 /60">
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50  dark:bg-slate-900 dark:text-slate-300 "
           >
             {isFetchingNextPage ? (
               <>
@@ -545,13 +545,13 @@ const PlaylistsGrid = () => {
         onClick={() => open()}
         whileHover={{ y: -3 }}
         whileTap={{ scale: 0.98 }}
-        className="group flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white/40 p-6 text-slate-500 transition hover:border-cyan-500 hover:bg-cyan-50/20 hover:text-cyan-600 dark:border-slate-800 dark:bg-slate-900/20 dark:text-slate-400 dark:hover:border-cyan-500/60 dark:hover:bg-cyan-950/20 dark:hover:text-cyan-400"
+        className="group flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white/40 p-6 text-slate-500 transition hover:border-cyan-500 hover:bg-accent/20 hover:text-primary  dark:bg-slate-900/20 dark:text-slate-400 dark:hover:border-cyan-500/60 dark:hover:bg-cyan-950/20 dark:hover:text-cyan-400"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition group-hover:scale-110 group-hover:text-cyan-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:group-hover:text-cyan-400">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-white text-slate-700 shadow-sm transition group-hover:scale-110 group-hover:text-primary  dark:bg-slate-900 dark:text-slate-300 dark:group-hover:text-cyan-400">
           <Plus className="h-5 w-5" />
         </div>
         <div className="text-center">
-          <span className="text-sm font-bold text-slate-900 dark:text-white">
+          <span className="text-sm font-bold text-slate-900 dark:text-primary-foreground">
             Create Playlist
           </span>
           <p className="mt-0.5 text-xs text-slate-400">
@@ -569,7 +569,7 @@ const PlaylistsGrid = () => {
             key={pl.id}
             variants={fadeUpItem}
             whileHover={{ y: -3 }}
-            className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700"
+            className="group overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md  dark:bg-slate-900/60 dark:hover:border-slate-700"
           >
             <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl bg-slate-950 flex items-center justify-center p-3">
               {videos.length > 0 ? (
@@ -602,7 +602,7 @@ const PlaylistsGrid = () => {
               <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
               {/* Playlist Stats / Badge */}
-              <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between text-white">
+              <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between text-primary-foreground">
                 <span className="flex items-center gap-1.5 rounded-lg bg-black/60 px-2 py-1 font-mono text-[10px] font-bold backdrop-blur-md">
                   <ListVideo className="h-3 w-3 text-cyan-400" />
                   {pl.videoCount} videos
@@ -610,7 +610,7 @@ const PlaylistsGrid = () => {
                 <span
                   className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                     pl.isPublic
-                      ? "bg-emerald-500/80 text-white"
+                      ? "bg-emerald-500/80 text-primary-foreground"
                       : "bg-slate-700/80 text-slate-200"
                   }`}
                 >
@@ -621,7 +621,7 @@ const PlaylistsGrid = () => {
 
             {/* Title & Info */}
             <div className="p-4">
-              <h4 className="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-400">
+              <h4 className="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-primary dark:text-primary-foreground dark:group-hover:text-cyan-400">
                 {pl.title}
               </h4>
               <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
@@ -669,12 +669,12 @@ export const StudioContentPage = () => {
         {/* Header Title Section */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary ">
               <span>Studio</span>
               <span>/</span>
               <span>Content</span>
             </div>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-primary-foreground sm:text-3xl">
               Channel Content
             </h1>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
@@ -722,7 +722,7 @@ export const StudioContentPage = () => {
         </motion.div>
 
         {/* Tab Switcher */}
-        <div className="flex gap-1 rounded-xl border border-slate-200/80 bg-slate-100/80 p-1 w-fit dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex gap-1 rounded-xl border border-border/80 bg-secondary/80 p-1 w-fit  dark:bg-slate-900">
           {(
             [
               { id: "videos", label: "Videos", Icon: VideoIcon },
@@ -734,7 +734,7 @@ export const StudioContentPage = () => {
               onClick={() => setActiveTab(id)}
               className={`relative flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
                 activeTab === id
-                  ? "text-slate-900 dark:text-white"
+                  ? "text-slate-900 dark:text-primary-foreground"
                   : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
@@ -742,7 +742,7 @@ export const StudioContentPage = () => {
                 <motion.div
                   layoutId="active-content-tab"
                   transition={{ type: "spring", stiffness: 450, damping: 35 }}
-                  className="absolute inset-0 rounded-lg bg-white shadow-sm dark:bg-slate-800"
+                  className="absolute inset-0 rounded-lg bg-white shadow-sm "
                 />
               )}
               <span className="relative z-10 flex items-center gap-2">

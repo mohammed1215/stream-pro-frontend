@@ -345,7 +345,7 @@ export const StudioEditVideoPage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100 md:p-10">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-600 dark:text-cyan-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary " />
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
             Loading video workspace...
           </p>
@@ -360,12 +360,12 @@ export const StudioEditVideoPage = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90"
+          className="w-full max-w-md rounded-2xl border border-border bg-white p-8 text-center shadow-xl backdrop-blur-xl  dark:bg-slate-900/90"
         >
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-1 ring-rose-200 dark:bg-destructive/10 dark:text-rose-400 dark:ring-rose-500/20">
             <AlertCircle className="h-7 w-7" />
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-primary-foreground">
             Video Not Found
           </h2>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -373,7 +373,7 @@ export const StudioEditVideoPage = () => {
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="mt-6 w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700"
+            className="mt-6 w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-slate-800  dark:hover:bg-slate-700"
           >
             Return to Studio
           </button>
@@ -383,20 +383,20 @@ export const StudioEditVideoPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 selection:bg-cyan-500/20 selection:text-cyan-700 dark:bg-slate-950 dark:text-slate-100 dark:selection:text-cyan-300">
+    <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 selection:bg-accent0/20 selection:text-accent-foreground dark:bg-slate-950 dark:text-slate-100 dark:selection:text-cyan-300">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 px-6 py-4 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/80">
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-white/80 px-6 py-4 backdrop-blur-md /80 dark:bg-slate-950/80">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
             <button
               onClick={() => navigate(-1)}
-              className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:text-white"
+              className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-900  dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:text-primary-foreground"
             >
               <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-0.5" />
             </button>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-primary ">
                   Video Details
                 </span>
                 <span className="text-slate-300 dark:text-slate-600">•</span>
@@ -404,7 +404,7 @@ export const StudioEditVideoPage = () => {
                   ID: {videoId}
                 </span>
               </div>
-              <h1 className="truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="truncate text-lg font-bold tracking-tight text-slate-900 dark:text-primary-foreground">
                 {video.title || "Untitled Video"}
               </h1>
             </div>
@@ -413,7 +413,7 @@ export const StudioEditVideoPage = () => {
           <div className="flex items-center gap-2.5">
             <button
               onClick={handleCopyLink}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+              className="flex items-center gap-2 rounded-xl border border-border bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50  dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 "
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
@@ -428,7 +428,7 @@ export const StudioEditVideoPage = () => {
                 href={`/videos/${videoId}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50  dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 "
               >
                 <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
                 <span className="hidden sm:inline">View Watch Page</span>
@@ -444,17 +444,17 @@ export const StudioEditVideoPage = () => {
           {/* Left Column: Details & Thumbnail */}
           <div className="space-y-6 lg:col-span-7">
             {/* Title & Description */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
+            <div className="rounded-2xl border border-border bg-white p-6 shadow-sm /80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 /80">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-primary-foreground">
                     Basic Information
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Describe your video clearly for search and viewers
                   </p>
                 </div>
-                <Sparkles className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                <Sparkles className="h-4 w-4 text-primary " />
               </div>
 
               <div className="mt-5 space-y-5">
@@ -486,7 +486,7 @@ export const StudioEditVideoPage = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Add a title that describes your video"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white dark:placeholder-slate-500 dark:focus:bg-transparent"
+                    className="w-full rounded-xl border border-border bg-slate-50/60 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-ring focus:bg-white focus:ring-2 focus:ring-ring/20  dark:bg-slate-950/60 dark:text-primary-foreground dark:placeholder-slate-500 dark:focus:bg-transparent"
                   />
                 </div>
 
@@ -508,16 +508,16 @@ export const StudioEditVideoPage = () => {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tell viewers what your video is about, add timestamps or links..."
-                    className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white dark:placeholder-slate-500 dark:focus:bg-transparent"
+                    className="w-full resize-y rounded-xl border border-border bg-slate-50/60 p-4 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-ring focus:bg-white focus:ring-2 focus:ring-ring/20  dark:bg-slate-950/60 dark:text-primary-foreground dark:placeholder-slate-500 dark:focus:bg-transparent"
                   />
                 </div>
               </div>
             </div>
 
             {/* Category, Tags & Schedule */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
-              <div className="border-b border-slate-100 pb-4 dark:border-slate-800/80">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="rounded-2xl border border-border bg-white p-6 shadow-sm /80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div className="border-b border-slate-100 pb-4 /80">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-primary-foreground">
                   Category, Tags & Schedule
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -540,7 +540,7 @@ export const StudioEditVideoPage = () => {
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     disabled={isCategoriesLoading}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white"
+                    className="w-full rounded-xl border border-border bg-slate-50/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-ring focus:bg-white focus:ring-2 focus:ring-ring/20  dark:bg-slate-950/60 dark:text-primary-foreground"
                   >
                     <option value="">
                       {isCategoriesLoading
@@ -569,17 +569,17 @@ export const StudioEditVideoPage = () => {
                       {tags.length}/{MAX_TAGS}
                     </span>
                   </label>
-                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2.5 focus-within:border-cyan-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60">
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-slate-50/60 p-2.5 focus-within:border-cyan-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-cyan-500/20  dark:bg-slate-950/60">
                     {tags.map((tag) => (
                       <span
                         key={tag}
-                        className="flex items-center gap-1 rounded-lg bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400"
+                        className="flex items-center gap-1 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground /10 "
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => handleRemoveTag(tag)}
-                          className="text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300"
+                          className="text-cyan-500 hover:text-accent-foreground dark:hover:text-cyan-300"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -596,7 +596,7 @@ export const StudioEditVideoPage = () => {
                         tags.length === 0 ? "Add a tag and press Enter" : ""
                       }
                       disabled={tags.length >= MAX_TAGS}
-                      className="min-w-[100px] flex-1 bg-transparent px-1 py-1 text-sm text-slate-900 outline-none placeholder-slate-400 dark:text-white dark:placeholder-slate-500"
+                      className="min-w-[100px] flex-1 bg-transparent px-1 py-1 text-sm text-slate-900 outline-none placeholder-slate-400 dark:text-primary-foreground dark:placeholder-slate-500"
                     />
                   </div>
                 </div>
@@ -628,10 +628,10 @@ export const StudioEditVideoPage = () => {
             </div>
 
             {/* Thumbnail Manager */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
+            <div className="rounded-2xl border border-border bg-white p-6 shadow-sm /80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 /80">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-primary-foreground">
                     Custom Thumbnail
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -642,7 +642,7 @@ export const StudioEditVideoPage = () => {
                 {/* Progress Badge with Cancel Button */}
                 {thumbnailProgress !== null && (
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1.5 rounded-lg bg-cyan-50 px-2.5 py-1 text-xs font-semibold text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400">
+                    <span className="flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-accent-foreground /10 ">
                       <Loader2 className="h-3 w-3 animate-spin" />{" "}
                       {thumbnailProgress}%
                     </span>
@@ -659,7 +659,7 @@ export const StudioEditVideoPage = () => {
 
               <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
                 {/* Thumbnail Preview Area */}
-                <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
+                <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-secondary  dark:bg-slate-950">
                   {video.thumbnailUrl ? (
                     <img
                       src={video.thumbnailUrl}
@@ -680,7 +680,7 @@ export const StudioEditVideoPage = () => {
                   {/* Thumbnail Overlay with Cancel Action */}
                   {thumbnailProgress !== null && (
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/75 p-4 text-center backdrop-blur-sm">
-                      <p className="text-xs font-semibold text-white">
+                      <p className="text-xs font-semibold text-primary-foreground">
                         {thumbnailProgress < 100
                           ? `Uploading (${thumbnailProgress}%)`
                           : "Processing image..."}
@@ -704,7 +704,7 @@ export const StudioEditVideoPage = () => {
                 </div>
 
                 {/* Upload Trigger Area */}
-                <label className="group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-5 text-center transition hover:border-cyan-500 hover:bg-cyan-50/30 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-cyan-500/60 dark:hover:bg-slate-900/60">
+                <label className="group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-slate-50/50 p-5 text-center transition hover:border-cyan-500 hover:bg-accent/30  dark:bg-slate-950/40 dark:hover:border-cyan-500/60 dark:hover:bg-slate-900/60">
                   <input
                     type="file"
                     accept="image/*"
@@ -718,7 +718,7 @@ export const StudioEditVideoPage = () => {
                       }
                     }}
                   />
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition group-hover:scale-110 group-hover:text-cyan-600 dark:border-transparent dark:bg-slate-900 dark:text-slate-300 dark:group-hover:text-cyan-400">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-white text-slate-600 shadow-sm transition group-hover:scale-110 group-hover:text-primary dark:border-transparent dark:bg-slate-900 dark:text-slate-300 dark:group-hover:text-cyan-400">
                     <Upload className="h-5 w-5" />
                   </div>
                   <span className="mt-3 text-xs font-semibold text-slate-700 dark:text-slate-200">
@@ -737,15 +737,15 @@ export const StudioEditVideoPage = () => {
           {/* Right Column: Player & Visibility */}
           <div className="space-y-6 lg:col-span-5">
             {/* Video Player Card */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-800/80">
+            <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm /80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 p-4 /80">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Source Video
                 </span>
 
                 {mediaProgress !== null && (
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1.5 text-xs font-semibold text-cyan-600 dark:text-cyan-400">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-primary ">
                       <Loader2 className="h-3 w-3 animate-spin" />{" "}
                       {mediaProgress}%
                     </span>
@@ -781,7 +781,7 @@ export const StudioEditVideoPage = () => {
                 {mediaProgress !== null && (
                   <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/85 p-6 text-center backdrop-blur-sm">
                     <Loader2 className="mb-3 h-8 w-8 animate-spin text-cyan-400" />
-                    <p className="text-sm font-bold text-white">
+                    <p className="text-sm font-bold text-primary-foreground">
                       {mediaProgress < 100
                         ? `Uploading Video: ${mediaProgress}%`
                         : "Encoding & processing HLS..."}
@@ -794,7 +794,7 @@ export const StudioEditVideoPage = () => {
 
                     <div className="mt-4 h-2 w-full max-w-xs overflow-hidden rounded-full bg-slate-800">
                       <motion.div
-                        className="h-full bg-cyan-500"
+                        className="h-full bg-accent0"
                         initial={{ width: 0 }}
                         animate={{ width: `${mediaProgress}%` }}
                         transition={{ duration: 0.2 }}
@@ -803,7 +803,7 @@ export const StudioEditVideoPage = () => {
 
                     <button
                       onClick={handleCancelMediaUpload}
-                      className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/20"
+                      className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-rose-400 transition hover:bg-destructive/20"
                     >
                       <X className="h-3.5 w-3.5" /> Cancel Upload
                     </button>
@@ -820,7 +820,7 @@ export const StudioEditVideoPage = () => {
                         Uploading media...
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400">
+                        <span className="font-mono font-bold text-primary ">
                           {mediaProgress}%
                         </span>
                         <button
@@ -831,15 +831,15 @@ export const StudioEditVideoPage = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 ">
                       <div
-                        className="h-full bg-cyan-500 transition-all duration-200"
+                        className="h-full bg-accent0 transition-all duration-200"
                         style={{ width: `${mediaProgress}%` }}
                       />
                     </div>
                   </div>
                 ) : (
-                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white">
+                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-white py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900  dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700  dark:hover:text-primary-foreground">
                     <input
                       type="file"
                       accept="video/*"
@@ -853,7 +853,7 @@ export const StudioEditVideoPage = () => {
                         }
                       }}
                     />
-                    <Film className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                    <Film className="h-3.5 w-3.5 text-primary " />
                     <span>Replace Video File</span>
                   </label>
                 )}
@@ -861,9 +861,9 @@ export const StudioEditVideoPage = () => {
             </div>
 
             {/* Visibility / Publishing Control */}
-            <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
+            <div className="space-y-4 rounded-2xl border border-border bg-white p-6 shadow-sm /80 dark:bg-slate-900/50 dark:backdrop-blur-sm">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-primary-foreground">
                   Visibility
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -871,14 +871,14 @@ export const StudioEditVideoPage = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-950">
+              <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-secondary p-1  dark:bg-slate-950">
                 <button
                   type="button"
                   onClick={() => video.isPublished && statusMutation.mutate()}
                   disabled={statusMutation.isPending}
                   className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition-all ${
                     !video.isPublished
-                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
+                      ? "bg-white text-slate-900 shadow-sm  dark:text-primary-foreground"
                       : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                   }`}
                 >
@@ -892,7 +892,7 @@ export const StudioEditVideoPage = () => {
                   disabled={statusMutation.isPending}
                   className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition-all ${
                     video.isPublished
-                      ? "bg-cyan-600 text-white shadow-sm shadow-cyan-500/20"
+                      ? "bg-primary text-primary-foreground shadow-sm shadow-cyan-500/20"
                       : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                   }`}
                 >
@@ -916,7 +916,7 @@ export const StudioEditVideoPage = () => {
       </main>
 
       {/* Floating Bottom Action Dock */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/80 px-6 py-4 backdrop-blur-lg dark:border-slate-800/80 dark:bg-slate-950/80">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/80 px-6 py-4 backdrop-blur-lg /80 dark:bg-slate-950/80">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-2">
             <span
@@ -938,7 +938,7 @@ export const StudioEditVideoPage = () => {
                 setDescription(video.description || "")
               }}
               disabled={!hasChanges || detailsMutation.isPending}
-              className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+              className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-500 transition hover:bg-secondary hover:text-slate-900 disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-primary-foreground"
             >
               Discard
             </button>
@@ -950,8 +950,8 @@ export const StudioEditVideoPage = () => {
               disabled={!hasChanges || detailsMutation.isPending}
               className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold transition ${
                 hasChanges
-                  ? "bg-cyan-600 font-bold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-500 dark:bg-cyan-500 dark:text-slate-950 dark:shadow-cyan-500/20 dark:hover:bg-cyan-400"
-                  : "cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+                  ? "bg-primary font-bold text-primary-foreground shadow-lg shadow-cyan-600/20 hover:bg-primary/90   dark:shadow-cyan-500/20 dark:hover:bg-cyan-400"
+                  : "cursor-not-allowed bg-slate-200 text-slate-400  dark:text-slate-500"
               }`}
             >
               {detailsMutation.isPending ? (

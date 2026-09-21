@@ -96,7 +96,7 @@ const LoginForm = () => {
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       {errors.global && (
-        <p className="text-red-500 text-sm text-center">{errors.global}</p>
+        <p className="text-destructive text-sm text-center">{errors.global}</p>
       )}
       {/* Email and Password Inputs */}
       <EmailInput

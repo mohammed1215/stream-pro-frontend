@@ -37,7 +37,7 @@ const HistoryCard = ({ item }: { item: WatchHistoryItem }) => {
 
         {/* Play Overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center text-white backdrop-blur-sm">
+          <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center text-primary-foreground backdrop-blur-sm">
             <Play className="w-5 h-5 ml-0.5" fill="currentColor" />
           </div>
         </div>

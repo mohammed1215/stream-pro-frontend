@@ -76,7 +76,7 @@ export const DateTimePicker = ({
       <Popover.Trigger asChild>
         <button
           type="button"
-          className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white"
+          className="flex w-full items-center justify-between rounded-xl border border-border bg-slate-50/60 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-ring focus:bg-white focus:ring-2 focus:ring-ring/20  dark:bg-slate-950/60 dark:text-primary-foreground"
         >
           <div className="flex items-center gap-2.5">
             <CalendarIcon className="h-4 w-4 text-slate-400" />
@@ -94,7 +94,7 @@ export const DateTimePicker = ({
           {selectedDate && (
             <div
               onClick={handleClear}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600  dark:hover:text-slate-200"
             >
               <X className="h-3.5 w-3.5" />
             </div>
@@ -111,11 +111,11 @@ export const DateTimePicker = ({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -8 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
-                className="z-50 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+                className="z-50 w-80 rounded-2xl border border-border bg-white p-4 shadow-xl  dark:bg-slate-900"
               >
                 {/* Header */}
                 <div className="mb-4 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-primary-foreground">
                     {currentMonth.format("MMMM YYYY")}
                   </span>
                   <div className="flex items-center gap-1">
@@ -124,7 +124,7 @@ export const DateTimePicker = ({
                       onClick={() =>
                         setCurrentMonth(currentMonth.subtract(1, "month"))
                       }
-                      className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                      className="rounded-lg p-1.5 text-slate-500 hover:bg-secondary dark:text-slate-400 "
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -133,7 +133,7 @@ export const DateTimePicker = ({
                       onClick={() =>
                         setCurrentMonth(currentMonth.add(1, "month"))
                       }
-                      className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                      className="rounded-lg p-1.5 text-slate-500 hover:bg-secondary dark:text-slate-400 "
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -169,8 +169,8 @@ export const DateTimePicker = ({
                           }
                           ${
                             isSelected
-                              ? "bg-cyan-600! text-white! dark:bg-cyan-500!"
-                              : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                              ? "bg-primary! text-primary-foreground! !"
+                              : "hover:bg-secondary "
                           }
                           ${
                             isDisabled
@@ -185,7 +185,7 @@ export const DateTimePicker = ({
                   })}
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 ">
                   <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                     <Clock className="h-3.5 w-3.5" />
                     <span>Time</span>
@@ -197,7 +197,7 @@ export const DateTimePicker = ({
                       onChange={(e) =>
                         handleTimeChange("hours", e.target.value)
                       }
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                      className="rounded-lg border border-border bg-slate-50 px-2 py-1 text-slate-800 outline-none focus:border-ring  dark:bg-slate-950 dark:text-slate-200"
                     >
                       {Array.from({ length: 24 }).map((_, i) => {
                         const val = i.toString().padStart(2, "0")
@@ -214,7 +214,7 @@ export const DateTimePicker = ({
                       onChange={(e) =>
                         handleTimeChange("minutes", e.target.value)
                       }
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                      className="rounded-lg border border-border bg-slate-50 px-2 py-1 text-slate-800 outline-none focus:border-ring  dark:bg-slate-950 dark:text-slate-200"
                     >
                       {Array.from({ length: 60 }).map((_, i) => {
                         const val = i.toString().padStart(2, "0")

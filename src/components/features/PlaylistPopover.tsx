@@ -1,5 +1,5 @@
 import { Content, Portal, Root, Trigger } from "@radix-ui/react-popover"
-import { motion, AnimatePresence, type Variants } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "../ui/button"
 import { toast } from "react-toastify"
 import { useState } from "react"
@@ -190,7 +190,7 @@ function WatchLaterItem({
     </button>
   )
 }
-const MotionButton = motion(Button)
+const MotionButton = motion.create(Button)
 
 export const PlaylistPopover = ({ videoId }: { videoId: string }) => {
   const user = useAuth((state) => state.user)

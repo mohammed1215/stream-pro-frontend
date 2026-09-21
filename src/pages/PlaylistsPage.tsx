@@ -65,7 +65,7 @@ const PlaylistCard = ({ playlist }: { playlist: Playlist }) => {
             className={`px-2 py-1 text-[10px] uppercase tracking-wider font-bold rounded-md flex items-center gap-1.5 backdrop-blur-md shadow-sm ${
               playlist.isPublic
                 ? "bg-green-500/20 text-green-100 border border-green-400/30"
-                : "bg-black/40 text-white/90 border border-white/10"
+                : "bg-black/40 text-primary-foreground/90 border border-white/10"
             }`}
           >
             {playlist.isPublic ? (
@@ -92,7 +92,7 @@ const PlaylistCard = ({ playlist }: { playlist: Playlist }) => {
         {/* Empty Overlay (Only visible if empty) */}
         {isEmpty && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px]">
-            <span className="text-white/90 text-sm font-semibold px-3 py-1 bg-black/40 rounded-full border border-white/10 shadow-lg">
+            <span className="text-primary-foreground/90 text-sm font-semibold px-3 py-1 bg-black/40 rounded-full border border-white/10 shadow-lg">
               No videos
             </span>
           </div>

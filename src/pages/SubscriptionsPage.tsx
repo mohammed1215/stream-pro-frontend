@@ -32,7 +32,7 @@ export const SubscriptionsPage = () => {
     <div className="mx-auto flex flex-col gap-6 p-6">
       {/* 1. Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-primary-foreground">
           Subscriptions
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
