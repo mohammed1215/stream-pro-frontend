@@ -1,7 +1,6 @@
 import { Bell, Menu, Plus, Search, Moon, Sun, ArrowLeft } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "../features/Auth/hooks/useAuth"
-import { InputGroup, InputGroupButton, InputGroupInput } from "./ui/input-group"
 import { Button } from "./ui/button"
 import { router } from "../router"
 import { useState } from "react"
@@ -10,51 +9,7 @@ import { useTheme } from "../hooks/useTheme"
 import { useCreateVideoModal } from "../hooks/useCreateVideo"
 import { usePlaylistModal } from "../hooks/usePlaylistModal"
 import { Content, Portal, Root, Trigger } from "@radix-ui/react-popover"
-
-interface SearchFormProps {
-  value: string
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
-  onSubmit: (event: React.FormEvent) => void
-  autoFocus?: boolean
-}
-
-export const SearchForm = ({
-  value,
-  onChange,
-  onSubmit,
-  autoFocus,
-}: SearchFormProps) => {
-  return (
-    <form role="search" onSubmit={onSubmit} className="mx-auto w-full max-w-lg">
-      <label htmlFor="site-search" className="sr-only">
-        Search videos
-      </label>
-
-      <InputGroup className="h-10 overflow-hidden rounded-full border border-border/80 bg-muted/40 transition-colors focus-within:border-primary/60">
-        <InputGroupInput
-          id="site-search"
-          name="q"
-          type="search"
-          placeholder="Search..."
-          value={value}
-          onChange={onChange}
-          autoComplete="off"
-          autoFocus={autoFocus}
-          className="bg-transparent px-4 text-sm"
-        />
-
-        <InputGroupButton
-          type="submit"
-          className="h-full cursor-pointer rounded-s-none px-4 transition-all active:scale-95 disabled:opacity-40"
-          disabled={!value.trim()}
-        >
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <span className="sr-only">Submit search</span>
-        </InputGroupButton>
-      </InputGroup>
-    </form>
-  )
-}
+import { SearchWithSuggestions } from "./SearchWithSuggestions"
 
 const CreateModals = () => {
   const { open: openCreateVideoModal } = useCreateVideoModal()
@@ -149,11 +104,10 @@ export const Header = ({
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <SearchForm
+        <SearchWithSuggestions
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           onSubmit={handleSubmit}
-          autoFocus
         />
       </header>
     )
@@ -199,7 +153,7 @@ export const Header = ({
 
       {/* Center: Search Bar - desktop/tablet only */}
       <div className="hidden flex-1 md:block">
-        <SearchForm
+        <SearchWithSuggestions
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           onSubmit={handleSubmit}
