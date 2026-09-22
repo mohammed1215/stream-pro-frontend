@@ -39,6 +39,7 @@ export interface FetchChannelVideosResponse {
       updatedAt: string
       isLikedByUser: boolean
       isInWatchLater: boolean
+      durationSeconds: number
     }
   ]
   pageNumber: number

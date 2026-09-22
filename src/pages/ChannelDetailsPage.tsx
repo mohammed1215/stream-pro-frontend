@@ -15,7 +15,7 @@ import {
 } from "../lib/channel"
 import { toast } from "react-toastify"
 import "./ChannelDetailsPage.css"
-import { formatNumber } from "../lib/helpers"
+import { formatDurationInSeconds, formatNumber } from "../lib/helpers"
 import { Fragment, useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion, type Variants } from "motion/react"
 import {
@@ -243,9 +243,7 @@ const ChannelButtons = ({
             className="btn-action btn-primary"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
-            onClick={() =>
-              navigate(`/studio/channel/${channelId}/customization`)
-            }
+            onClick={() => navigate(`/studio/content/${channelId}`)}
           >
             <SlidersHorizontal size={18} />
             <span>Customize Channel</span>
@@ -254,7 +252,7 @@ const ChannelButtons = ({
             className="btn-action btn-secondary"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
-            onClick={() => navigate(`/studio/channel/${channelId}/videos`)}
+            onClick={() => navigate(`/studio/content/`)}
           >
             <Video size={18} />
             <span>Manage Videos</span>
@@ -326,6 +324,12 @@ const ChannelVideoItem = ({
           </motion.button>
         </div>
 
+        {video.durationSeconds != null && (
+          <span className="absolute bottom-1.5 right-1.5 z-10 rounded bg-black/80 px-1.5 py-0.5 text-xs font-semibold leading-none text-white tabular-nums">
+            {formatDurationInSeconds(video.durationSeconds)}
+          </span>
+        )}
+
         <div className="card-overlay">
           <motion.div
             className="play-icon-badge"
@@ -343,7 +347,6 @@ const ChannelVideoItem = ({
             {video.videoTitle}
           </h3>
 
-          {/* Action Menu (stops bubbling to card click) */}
           <div
             className="shrink-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100"
             onClick={(e) => e.stopPropagation()}
@@ -372,7 +375,6 @@ const ChannelVideoItem = ({
     </motion.div>
   )
 }
-
 const ChannelPlaylistItem = ({
   playlist,
   isOwner = false,
