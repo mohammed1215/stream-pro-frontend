@@ -1,4 +1,8 @@
-:root {
+/* ============================================
+   LIGHT THEME (Default)
+   ============================================ */
+:root,
+[data-theme="light"] {
   /* Surface & Base */
   --background: #ffffff;
   --foreground: #0f172a; /* Slate 900 */
@@ -45,48 +49,144 @@
 }
 
 /* ============================================
-   DARK THEME
+   DARK THEME — Neutral Gray + Teal/Emerald Accent
    ============================================ */
-.dark {
+[data-theme="dark"] {
   /* Surface & Base */
-  --background: #020617; /* Slate 950 */
-  --foreground: #f8fafc; /* Slate 50 */
-  --background-secondary: #0f172a; /* Slate 900 */
-  --background-secondary-hover: #1e293b; /* Slate 800 */
-  --text-foreground: #f8fafc;
+  --background: #09090b; /* Zinc 950 */
+  --foreground: #fafafa; /* Zinc 50 */
+  --background-secondary: #18181b; /* Zinc 900 */
+  --background-secondary-hover: #27272a; /* Zinc 800 */
+  --text-foreground: #fafafa;
 
-  --border: #1e293b; /* Slate 800 */
-  --input: #1e293b;
-  --ring: #38bdf8; /* Sky 400 */
+  --border: #27272a; /* Zinc 800 */
+  --input: #27272a;
+  --ring: #2dd4bf; /* Teal 400 */
 
   /* Primary Brand */
-  --primary: #38bdf8; /* Sky 400 */
-  --primary-foreground: #020617;
+  --primary: #2dd4bf; /* Teal 400 */
+  --primary-foreground: #09090b;
 
   /* Secondary Surface */
-  --secondary: #0f172a;
-  --secondary-foreground: #f8fafc;
+  --secondary: #18181b;
+  --secondary-foreground: #fafafa;
 
-  --muted: #0f172a;
-  --muted-foreground: #94a3b8; /* Slate 400 */
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa; /* Zinc 400 */
 
   /* Accents */
-  --accent: #38bdf8; /* Sky 400 */
-  --accent-hover: #7dd3fc;
-  --accent-ui: #0c4a6e; /* Sky 900 */
-  --accent-foreground: #e0f2fe; /* Sky 100 */
-  --accent-bg: rgba(56, 189, 248, 0.15);
-  --accent-border: rgba(56, 189, 248, 0.4);
+  --accent: #34d399; /* Emerald 400 */
+  --accent-hover: #6ee7b7; /* Emerald 300 */
+  --accent-ui: #064e3b; /* Emerald 900 */
+  --accent-foreground: #d1fae5; /* Emerald 100 */
+  --accent-bg: rgba(45, 212, 191, 0.15);
+  --accent-border: rgba(45, 212, 191, 0.4);
 
   --destructive: #f87171;
 
   /* Typography & Legacy fallbacks */
-  --text: #94a3b8;
-  --text-h: #f8fafc;
-  --text-secondary: #94a3b8;
-  --bg: #020617;
-  --code-bg: #0f172a;
-  --social-bg: rgba(15, 23, 42, 0.8);
+  --text: #a1a1aa;
+  --text-h: #fafafa;
+  --text-secondary: #a1a1aa;
+  --bg: #09090b;
+  --code-bg: #18181b;
+  --social-bg: rgba(24, 24, 27, 0.8);
+
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4),
+    0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   OCEAN THEME — Deep Blue + Cyan Accent
+   ============================================ */
+[data-theme="ocean"] {
+  /* Surface & Base */
+  --background: #061622; /* Deep Ocean Blue-Black */
+  --foreground: #e0f2fe; /* Sky 100 */
+  --background-secondary: #0c2438; /* Dark Blue 900 */
+  --background-secondary-hover: #133650; /* Blue 800 */
+  --text-foreground: #e0f2fe;
+
+  --border: #133650;
+  --input: #133650;
+  --ring: #22d3ee; /* Cyan 400 */
+
+  /* Primary Brand */
+  --primary: #22d3ee; /* Cyan 400 */
+  --primary-foreground: #061622;
+
+  /* Secondary Surface */
+  --secondary: #0c2438;
+  --secondary-foreground: #e0f2fe;
+
+  --muted: #0c2438;
+  --muted-foreground: #7dd3fc; /* Sky 300 */
+
+  /* Accents */
+  --accent: #38bdf8; /* Sky 400 */
+  --accent-hover: #7dd3fc; /* Sky 300 */
+  --accent-ui: #0c4a6e; /* Sky 900 */
+  --accent-foreground: #e0f2fe; /* Sky 100 */
+  --accent-bg: rgba(34, 211, 238, 0.15);
+  --accent-border: rgba(34, 211, 238, 0.4);
+
+  --destructive: #f87171;
+
+  /* Typography & Legacy fallbacks */
+  --text: #7dd3fc;
+  --text-h: #e0f2fe;
+  --text-secondary: #7dd3fc;
+  --bg: #061622;
+  --code-bg: #0c2438;
+  --social-bg: rgba(12, 36, 56, 0.8);
+
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4),
+    0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   SUNSET THEME — Warm Brown-Black + Orange/Amber Accent
+   ============================================ */
+[data-theme="sunset"] {
+  /* Surface & Base */
+  --background: #1a0f02; /* Deep Amber-Black */
+  --foreground: #fffbeb; /* Amber 50 */
+  --background-secondary: #2e1a05; /* Deep Amber 950 */
+  --background-secondary-hover: #45280a; /* Amber 900/800 mix */
+  --text-foreground: #fffbeb;
+
+  --border: #45280a;
+  --input: #45280a;
+  --ring: #fb923c; /* Orange 400 */
+
+  /* Primary Brand */
+  --primary: #fb923c; /* Orange 400 */
+  --primary-foreground: #1a0f02;
+
+  /* Secondary Surface */
+  --secondary: #2e1a05;
+  --secondary-foreground: #fffbeb;
+
+  --muted: #2e1a05;
+  --muted-foreground: #fcd34d; /* Amber 300 */
+
+  /* Accents */
+  --accent: #f59e0b; /* Amber 500 */
+  --accent-hover: #fbbf24; /* Amber 400 */
+  --accent-ui: #78350f; /* Amber 900 */
+  --accent-foreground: #fef3c7; /* Amber 100 */
+  --accent-bg: rgba(245, 158, 11, 0.15);
+  --accent-border: rgba(245, 158, 11, 0.4);
+
+  --destructive: #f87171;
+
+  /* Typography & Legacy fallbacks */
+  --text: #fcd34d;
+  --text-h: #fffbeb;
+  --text-secondary: #fcd34d;
+  --bg: #1a0f02;
+  --code-bg: #2e1a05;
+  --social-bg: rgba(46, 26, 5, 0.8);
 
   --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4),
     0 4px 6px -2px rgba(0, 0, 0, 0.3);

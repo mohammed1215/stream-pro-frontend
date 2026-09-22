@@ -383,6 +383,12 @@ const ChannelPlaylistItem = ({
   const navigate = useNavigate()
   const isEmpty = playlist.videosCount === 0
 
+  const validThumbnails = (playlist.thumbnails ?? []).filter((t): t is string =>
+    Boolean(t)
+  )
+  const hasThumbnails = validThumbnails.length > 0
+  const count = Math.min(validThumbnails.length, 4)
+
   const handleClick = () => {
     if (isEmpty) return
     navigate(`/playlist?list=${playlist.id}`)
@@ -399,26 +405,60 @@ const ChannelPlaylistItem = ({
       role={isEmpty ? "presentation" : "button"}
       tabIndex={isEmpty ? -1 : 0}
     >
-      <div className="card-thumbnail-wrapper">
-        <div className="playlist-thumbnail-fallback">
-          <ListVideo size={36} className="text-accent" />
-        </div>
+      <div className="card-thumbnail-wrapper relative w-full h-full overflow-hidden">
+        {hasThumbnails ? (
+          <div
+            className={`grid w-full h-full gap-0.5 ${
+              count === 1
+                ? "grid-cols-1"
+                : count === 2
+                ? "grid-cols-2"
+                : "grid-cols-2 grid-rows-2"
+            }`}
+          >
+            {validThumbnails.slice(0, 4).map((thumb, index) => (
+              <img
+                key={index}
+                src={thumb}
+                alt={`${playlist.title} thumbnail ${index + 1}`}
+                loading="lazy"
+                className={`w-full h-full object-cover ${
+                  count === 3 && index === 0 ? "row-span-2" : ""
+                }`}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="playlist-thumbnail-fallback flex items-center justify-center w-full h-full">
+            <ListVideo size={36} className="text-accent" />
+          </div>
+        )}
 
         {isOwner && (
-          <div className="playlist-visibility-badge">
+          <div className="playlist-visibility-badge absolute top-2 right-2 z-10">
             {playlist.isPublic ? (
-              <span title="Public Playlist">
+              <span
+                title="Public Playlist"
+                className="flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-1 rounded-full"
+              >
                 <Globe size={13} /> Public
               </span>
             ) : (
-              <span title="Private Playlist">
+              <span
+                title="Private Playlist"
+                className="flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-1 rounded-full"
+              >
                 <Lock size={13} /> Private
               </span>
             )}
           </div>
         )}
 
-        <div className={`playlist-count-badge ${isEmpty ? "empty-badge" : ""}`}>
+        <div
+          className={`playlist-count-badge absolute bottom-2 right-2 z-10 flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-1 rounded-full ${
+            isEmpty ? "empty-badge" : ""
+          }`}
+        >
           <Layers size={14} />
           <span>
             {isEmpty

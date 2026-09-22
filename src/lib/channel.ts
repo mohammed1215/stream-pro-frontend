@@ -73,6 +73,7 @@ export interface FetchChannelPlaylistsResponse {
       updatedAt: string
       isPublic: boolean
       videosCount: number
+      thumbnails: (string | null)[] | null
     }
   ]
   totalCount: number

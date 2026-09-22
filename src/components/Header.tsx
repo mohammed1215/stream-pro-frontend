@@ -10,6 +10,7 @@ import { useCreateVideoModal } from "../hooks/useCreateVideo"
 import { usePlaylistModal } from "../hooks/usePlaylistModal"
 import { Content, Portal, Root, Trigger } from "@radix-ui/react-popover"
 import { SearchWithSuggestions } from "./SearchWithSuggestions"
+import { ThemeSwitcher } from "./ThemeSwitcher"
 
 const CreateModals = () => {
   const { open: openCreateVideoModal } = useCreateVideoModal()
@@ -201,19 +202,7 @@ export const Header = ({
 
         {/* Theme Toggle Button - hidden on very small screens to save space */}
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="rounded-full text-foreground/80 hover:bg-muted hover:text-foreground"
-          >
-            {theme === "light" ? (
-              <Moon className="h-5 w-5" />
-            ) : (
-              <Sun className="h-5 w-5" />
-            )}
-          </Button>
+          <ThemeSwitcher />
         </motion.div>
 
         {/* User Profile Avatar */}

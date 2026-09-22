@@ -1,6 +1,7 @@
 import { create } from "zustand"
 
-type Theme = "light" | "dark"
+export const THEMES = ["light", "dark", "ocean", "sunset"] as const
+export type Theme = (typeof THEMES)[number]
 
 interface ThemeStore {
   theme: Theme
@@ -11,16 +12,17 @@ interface ThemeStore {
 const STORAGE_KEY = "stream_theme"
 
 const applyThemeToDOM = (theme: Theme) => {
-  const root = document.documentElement
-  root.classList.remove("light", "dark")
-  root.classList.add(theme)
+  document.documentElement.setAttribute("data-theme", theme)
 }
+
+const isValidTheme = (value: string | null): value is Theme =>
+  value !== null && THEMES.includes(value as Theme)
 
 const getInitialTheme = (): Theme => {
   if (typeof window === "undefined") return "light"
 
-  const savedTheme = localStorage.getItem(STORAGE_KEY) as Theme | null
-  if (savedTheme === "light" || savedTheme === "dark") {
+  const savedTheme = localStorage.getItem(STORAGE_KEY)
+  if (isValidTheme(savedTheme)) {
     applyThemeToDOM(savedTheme)
     return savedTheme
   }
@@ -31,7 +33,7 @@ const getInitialTheme = (): Theme => {
   return systemTheme
 }
 
-export const useTheme = create<ThemeStore>((set) => ({
+export const useTheme = create<ThemeStore>((set, get) => ({
   theme: getInitialTheme(),
 
   setTheme: (theme) => {
@@ -41,11 +43,9 @@ export const useTheme = create<ThemeStore>((set) => ({
   },
 
   toggleTheme: () => {
-    set((state) => {
-      const nextTheme = state.theme === "light" ? "dark" : "light"
-      localStorage.setItem(STORAGE_KEY, nextTheme)
-      applyThemeToDOM(nextTheme)
-      return { theme: nextTheme }
-    })
+    const nextTheme: Theme = get().theme === "dark" ? "light" : "dark"
+    localStorage.setItem(STORAGE_KEY, nextTheme)
+    applyThemeToDOM(nextTheme)
+    set({ theme: nextTheme })
   },
 }))

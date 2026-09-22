@@ -20,6 +20,10 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-accent-bg: var(--accent-bg);
+  --color-card: var(--background-secondary);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--background-secondary);
+  --color-popover-foreground: var(--foreground);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
