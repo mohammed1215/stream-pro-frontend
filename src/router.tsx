@@ -19,6 +19,7 @@ import { LikedVideosPage } from "./pages/LikedVideosPage"
 import { SubscriptionsPage } from "./pages/SubscriptionsPage"
 import { SessionsPage } from "./pages/SessionsPage"
 import { ProfilePage } from "./pages/ProfilePage"
+import { StudioChannelCustomizationPage } from "./pages/StudioChannelCustomizationPage"
 
 export const router = createBrowserRouter([
   {
@@ -85,7 +86,7 @@ export const router = createBrowserRouter([
 
           {
             path: "channel/customization",
-            element: <div>Channel Branding</div>,
+            element: <StudioChannelCustomizationPage />,
           },
         ],
       },

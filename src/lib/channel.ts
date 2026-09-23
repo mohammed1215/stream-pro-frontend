@@ -1,3 +1,4 @@
+import type { AxiosProgressEvent } from "axios"
 import axiosInstance from "./api"
 
 export interface FetchChannelDataResponse {
@@ -23,6 +24,15 @@ export const fetchChannelData = async (
     `/api/v1/channels/${channelId}`,
     { signal }
   )
+  return res.data
+}
+
+export const fetchOwnerChannelData = async (signal?: AbortSignal) => {
+  const res = await axiosInstance.get<FetchChannelDataResponse>(
+    `/api/v1/owner/channels`,
+    { signal }
+  )
+
   return res.data
 }
 
@@ -134,6 +144,38 @@ export const fetchChannelHome = async (
     `/api/v1/channels/${channelId}/home`,
     {
       signal,
+    }
+  )
+  return res.data
+}
+
+export const updateChannelAvatar = async (
+  formData: { avatar: File },
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
+  signal?: AbortSignal
+) => {
+  const res = await axiosInstance.patchForm(
+    "/api/v1/owner/channels/upload-channel-image",
+    formData,
+    {
+      signal,
+      onUploadProgress,
+    }
+  )
+  return res.data
+}
+
+export const updateChannelBanner = async (
+  formData: { thumbnail: File },
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
+  signal?: AbortSignal
+) => {
+  const res = await axiosInstance.patchForm(
+    `/api/v1/owner/channels/upload-thumbnail`,
+    formData,
+    {
+      signal,
+      onUploadProgress,
     }
   )
   return res.data
