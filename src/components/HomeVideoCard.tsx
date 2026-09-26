@@ -21,6 +21,7 @@ export type VideoCardVideo = {
     id?: string
     title?: string
     thumbnailUrl?: string
+    channelImageUrl: string | null
   }
 }
 
@@ -112,9 +113,9 @@ export const HomeVideoCard = ({
           onClick={(e) => !video.channel?.id && e.preventDefault()}
           className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60 transition-transform hover:scale-105"
         >
-          {video.channel?.thumbnailUrl ? (
+          {video.channel?.channelImageUrl ? (
             <img
-              src={video.channel.thumbnailUrl}
+              src={video.channel.channelImageUrl}
               alt={video.channel.title ?? "Channel avatar"}
               loading="lazy"
               className="h-full w-full object-cover"

@@ -42,6 +42,7 @@ import { cn } from "../../../lib/utils"
 import { Input } from "../../../components/ui/input"
 import {
   getCommentsOfVideo,
+  getRepliesOfComment,
   postCommentOnVideo,
   type CommentResponse,
 } from "../../../lib/comment"
@@ -410,10 +411,22 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
   const [error, setError] = useState<string | null>(null)
   const [editMode, setEditMode] = useState(false)
 
+  const [replyMode, setReplyMode] = useState(false)
+  const [replyInput, setReplyInput] = useState("")
+  const [replyError, setReplyError] = useState<string | null>(null)
+  const replyInputRef = useRef<HTMLInputElement | null>(null)
+
+  const [showReplies, setShowReplies] = useState(false)
+
   const dropDownRef = useRef<HTMLDivElement | null>(null)
   const editInputRef = useRef<HTMLInputElement | null>(null)
 
-  const { updateComment, deleteComment } = useCommentApi()
+  const { updateComment, deleteComment, postComment } = useCommentApi()
+  const { data: replies, isLoading: isRepliesLoading } = useQuery({
+    queryKey: ["replies", comment.commentId],
+    queryFn: () => getRepliesOfComment(comment.commentId, 1, 10),
+    enabled: showReplies,
+  })
 
   useEffect(() => {
     if (editMode) {
@@ -421,6 +434,12 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
       editInputRef.current?.select()
     }
   }, [editMode])
+
+  useEffect(() => {
+    if (replyMode) {
+      replyInputRef.current?.focus()
+    }
+  }, [replyMode])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -466,6 +485,45 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
       }
     )
   }
+
+  function handleCancelReply() {
+    setReplyInput("")
+    setReplyError(null)
+    setReplyMode(false)
+  }
+
+  function handleReplySubmit(e?: React.FormEvent) {
+    e?.preventDefault()
+
+    const trimmed = replyInput.trim()
+    if (!trimmed) {
+      setReplyError("Reply cannot be empty")
+      return
+    }
+
+    postComment(
+      {
+        content: trimmed,
+        videoId: comment.videoId,
+        parentId: comment.commentId,
+      },
+      {
+        onSuccess: () => {
+          setReplyInput("")
+          setReplyError(null)
+          setReplyMode(false)
+          setShowReplies(true)
+        },
+      }
+    )
+  }
+
+  function handleShowReplies() {
+    setShowReplies((prev) => !prev)
+    setReplyMode(false)
+  }
+
+  const hasReplies = comment.replyCount > 0
 
   return (
     <motion.div
@@ -581,10 +639,102 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
                   variant="ghost"
                   size="sm"
                   className="rounded-full h-8 px-3 text-xs font-semibold hover:bg-muted"
+                  onClick={() => setReplyMode((prev) => !prev)}
                 >
                   Reply
                 </Button>
               </div>
+
+              <AnimatePresence initial={false}>
+                {replyMode && (
+                  <motion.form
+                    key="reply-form"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.15 }}
+                    onSubmit={handleReplySubmit}
+                    className="space-y-2 pt-2 overflow-hidden"
+                  >
+                    <Input
+                      ref={replyInputRef}
+                      type="text"
+                      value={replyInput}
+                      onChange={(e) => {
+                        setReplyInput(e.target.value)
+                        if (replyError) setReplyError(null)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") handleCancelReply()
+                      }}
+                      placeholder={`Reply to ${comment.userName}...`}
+                      className="border-0 border-b-2 border-primary rounded-none px-0 bg-transparent text-sm text-foreground focus-visible:ring-0 focus-visible:border-primary transition-all h-9"
+                    />
+
+                    {replyError && (
+                      <p className="text-xs text-destructive font-medium">
+                        {replyError}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full h-8 px-3 text-xs font-semibold hover:bg-muted"
+                        onClick={handleCancelReply}
+                      >
+                        <X className="h-3.5 w-3.5 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={!replyInput.trim()}
+                        className="rounded-full h-8 px-4 text-xs font-semibold gap-1"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        Reply
+                      </Button>
+                    </div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+
+              {hasReplies && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full h-8 px-3 mt-1 gap-1.5 text-xs font-semibold text-primary hover:bg-muted hover:text-primary"
+                  onClick={handleShowReplies}
+                >
+                  {showReplies ? (
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  )}
+                  {comment.replyCount}{" "}
+                  {comment.replyCount === 1 ? "reply" : "replies"}
+                </Button>
+              )}
+
+              <AnimatePresence initial={false}>
+                {showReplies && hasReplies && !isRepliesLoading && (
+                  <motion.div
+                    key="replies-list"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="mt-2 pl-4 border-l-2 border-border/60 space-y-2 overflow-hidden"
+                  >
+                    {replies?.map((reply) => (
+                      <CommentItem key={reply.commentId} comment={reply} />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
@@ -620,6 +770,7 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
               className="w-full justify-start text-xs font-medium rounded-lg h-8"
               onClick={() => {
                 setCommentSettings(false)
+                setReplyMode(false)
                 setEditMode(true)
               }}
             >

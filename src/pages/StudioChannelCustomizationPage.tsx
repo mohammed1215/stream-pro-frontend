@@ -13,97 +13,13 @@ import {
   Camera,
   UserCircle2,
 } from "lucide-react"
-import axiosInstance from "../lib/api"
-import { uploadThumbnailToCloudApi } from "../lib/video"
 import { cn } from "../lib/utils"
 import {
-  fetchChannelData,
   fetchOwnerChannelData,
   updateChannelAvatar,
   updateChannelBanner,
+  updateChannelDetails,
 } from "../lib/channel"
-
-// ============================================================
-// TODO(api): replace these with your real endpoints/DTOs once
-// the backend is ready. Shapes are guesses based on the existing
-// FetchChannelDataResponse / video-thumbnail signature pattern.
-// ============================================================
-
-// interface OwnerChannelData {
-//   channelId: string
-//   title: string
-//   description: string
-//   thumbnailUrl: string | null // banner
-//   channelImageUrl: string | null // avatar
-// }
-
-// const getOwnerChannelData = async (): Promise<OwnerChannelData> => {
-//   const res = await axiosInstance.get<OwnerChannelData>("/api/v1/owner/channel")
-//   return res.data
-// }
-
-// const updateChannelDetails = async (payload: {
-//   title: string
-//   description: string
-// }) => {
-//   // TODO(api): PATCH /api/v1/owner/channel
-//   const res = await axiosInstance.patch("/api/v1/owner/channel", payload)
-//   return res.data
-// }
-
-interface CloudSignature {
-  uploadUrl: string
-  apiKey: string
-  timestamp: number
-  signature: string
-  folder: string
-  public_id: string
-  transformation?: string
-}
-
-// const getChannelAvatarSignatureApi = async (): Promise<CloudSignature> => {
-//   // TODO(api): PATCH /api/v1/owner/channel/avatar/signature
-//   const res = await axiosInstance.patch<CloudSignature>(
-//     "/api/v1/owner/channel/avatar/signature"
-//   )
-//   return res.data
-// }
-
-// const confirmChannelAvatarUpload = async (payload: {
-//   publicId: string
-//   version: number
-//   signature: string
-//   channelImageUrl: string
-// }) => {
-//   // TODO(api): POST /api/v1/owner/channel/avatar-upload-completed
-//   const res = await axiosInstance.post(
-//     "/api/v1/owner/channel/avatar-upload-completed",
-//     payload
-//   )
-//   return res.data
-// }
-
-// const getChannelBannerSignatureApi = async (): Promise<CloudSignature> => {
-//   // TODO(api): PATCH /api/v1/owner/channel/banner/signature
-//   const res = await axiosInstance.patch<CloudSignature>(
-//     "/api/v1/owner/channel/banner/signature"
-//   )
-//   return res.data
-// }
-
-// const confirmChannelBannerUpload = async (payload: {
-//   publicId: string
-//   version: number
-//   signature: string
-//   thumbnailUrl: string
-// }) => {
-//   // TODO(api): POST /api/v1/owner/channel/banner-upload-completed
-//   const res = await axiosInstance.post(
-//     "/api/v1/owner/channel/banner-upload-completed",
-//     payload
-//   )
-//   return res.data
-// }
 
 // ============================================================
 // Component
@@ -157,14 +73,13 @@ export const StudioChannelCustomizationPage = () => {
     (title !== channel.title || description !== (channel.description || ""))
 
   //   // --- Details mutation ---
-  //   const detailsMutation = useMutation({
-  //     mutationFn: () => updateChannelDetails({ title, description }),
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries({ queryKey: ["owner-channel"] })
-  //       showToast("Channel details saved", "success")
-  //     },
-  //     onError: () => showToast("Couldn't save changes.", "error"),
-  //   })
+  const detailsMutation = useMutation({
+    mutationFn: () => updateChannelDetails({ title, description }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-channel"] })
+      showToast("Channel details saved", "success")
+    },
+  })
 
   // --- Avatar mutation ---
   const avatarMutation = useMutation({
@@ -185,10 +100,6 @@ export const StudioChannelCustomizationPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["owner-channel"] })
       showToast("Avatar updated successfully", "success")
-    },
-    onError: (err: any) => {
-      if (axios.isCancel(err) || err?.name === "CanceledError") return
-      showToast("Failed to upload avatar. Please try again.", "error")
     },
     onSettled: () => {
       avatarAbortRef.current = null
@@ -566,7 +477,7 @@ export const StudioChannelCustomizationPage = () => {
                 setTitle(channel.title || "")
                 setDescription(channel.description || "")
               }}
-              //   disabled={!hasChanges || detailsMutation.isPending}
+              disabled={!hasChanges || detailsMutation.isPending}
               className="rounded-xl px-4 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
             >
               Discard
@@ -575,8 +486,8 @@ export const StudioChannelCustomizationPage = () => {
             <motion.button
               whileHover={hasChanges ? { scale: 1.02 } : {}}
               whileTap={hasChanges ? { scale: 0.98 } : {}}
-              //   onClick={() => detailsMutation.mutate()}
-              //   disabled={!hasChanges || detailsMutation.isPending}
+              onClick={() => detailsMutation.mutate()}
+              disabled={!hasChanges || detailsMutation.isPending}
               className={cn(
                 "flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold transition",
                 hasChanges
@@ -584,11 +495,11 @@ export const StudioChannelCustomizationPage = () => {
                   : "cursor-not-allowed bg-muted text-muted-foreground"
               )}
             >
-              {/* {detailsMutation.isPending ? (
+              {detailsMutation.isPending ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Save className="h-3.5 w-3.5" />
-              )} */}
+              )}
               Save Changes
             </motion.button>
           </div>

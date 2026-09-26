@@ -243,7 +243,7 @@ const ChannelButtons = ({
             className="btn-action btn-primary"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
-            onClick={() => navigate(`/studio/content/${channelId}`)}
+            onClick={() => navigate(`/studio/channel/customization`)}
           >
             <SlidersHorizontal size={18} />
             <span>Customize Channel</span>

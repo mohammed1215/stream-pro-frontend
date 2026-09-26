@@ -20,6 +20,7 @@ import { SubscriptionsPage } from "./pages/SubscriptionsPage"
 import { SessionsPage } from "./pages/SessionsPage"
 import { ProfilePage } from "./pages/ProfilePage"
 import { StudioChannelCustomizationPage } from "./pages/StudioChannelCustomizationPage"
+import { StudioCommentsPage } from "./pages/StudioCommentsPage"
 
 export const router = createBrowserRouter([
   {
@@ -82,7 +83,7 @@ export const router = createBrowserRouter([
           { path: "upload", element: <div>Upload Video Flow</div> },
 
           { path: "analytics", element: <div>Analytics</div> },
-          { path: "comments", element: <div>Comments Moderation</div> },
+          { path: "comments", element: <StudioCommentsPage /> },
 
           {
             path: "channel/customization",

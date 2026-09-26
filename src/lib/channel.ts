@@ -149,6 +149,16 @@ export const fetchChannelHome = async (
   return res.data
 }
 
+export const updateChannelDetails = async (
+  payload: { title?: string; description?: string },
+  signal?: AbortSignal
+) => {
+  const res = await axiosInstance.patch("/api/v1/owner/channels", payload, {
+    signal,
+  })
+  return res.data
+}
+
 export const updateChannelAvatar = async (
   formData: { avatar: File },
   onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,

@@ -12,6 +12,7 @@ import {
   X,
   Sparkles,
   type LucideIcon,
+  SlidersHorizontal,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { NavLink, Outlet, useLocation } from "react-router-dom"
@@ -39,6 +40,12 @@ const STUDIO_NAV_ITEMS: StudioNavItemConfig[] = [
     group: "Overview",
   },
   { name: "Content", href: "/studio/content", icon: Video, group: "Manage" },
+  {
+    name: "Customize",
+    href: "/studio/channel/customization",
+    icon: SlidersHorizontal,
+    group: "Manage",
+  },
   {
     name: "Comments",
     href: "/studio/comments",
