@@ -21,6 +21,7 @@ import { SessionsPage } from "./pages/SessionsPage"
 import { ProfilePage } from "./pages/ProfilePage"
 import { StudioChannelCustomizationPage } from "./pages/StudioChannelCustomizationPage"
 import { StudioCommentsPage } from "./pages/StudioCommentsPage"
+import { StudioSubscribersPage } from "./pages/StudioSubscribersPage"
 
 export const router = createBrowserRouter([
   {
@@ -79,7 +80,7 @@ export const router = createBrowserRouter([
           { index: true, element: <StudioDashboardPage /> },
           { path: "content", element: <StudioContentPage /> },
           { path: "content/:videoId/edit", element: <StudioEditVideoPage /> },
-
+          { path: "content/subscribers", element: <StudioSubscribersPage /> },
           { path: "upload", element: <div>Upload Video Flow</div> },
 
           { path: "analytics", element: <div>Analytics</div> },

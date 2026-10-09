@@ -64,7 +64,7 @@ export interface PaginatedUserSubscriptions {
         title: string
         thumbnailUrl: string
         description: string
-        subscriberCount: 0
+        subscriberCount: number
       }
     }
   ]
@@ -81,5 +81,36 @@ export const getUserSubscriptions = async (
     `/api/v1/subscriptions`,
     { params: { cursor, pageSize }, signal }
   )
+  return res.data
+}
+
+export const getChannelSubscribers = async (
+  pageNumber = 1,
+  pageSize = 10,
+  signal?: AbortSignal
+) => {
+  const res = await axiosInstance.get<{
+    items: {
+      subscriptionId: string
+      channelId: string
+      userId: string
+      name: string
+      email: string
+      avatarUrl: string
+      channelTitle: string
+      channelThumbnailUrl: string
+      channelImageUrl: string
+      createdAt: string
+      userChannelId: string | null
+    }[]
+    pageNumber: number
+    pageSize: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+    totalPages: number
+  }>(`/api/v1/owner/subscriptions`, {
+    params: { pageNumber, pageSize },
+    signal,
+  })
   return res.data
 }

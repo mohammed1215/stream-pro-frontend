@@ -190,7 +190,7 @@ function MoreOptionsDropdown({
 
   return (
     <DropdownWrapper isOpen={isOpen} onClose={onClose}>
-      <div className="p-1 min-w-[180px] space-y-0.5">
+      <div className="p-1 min-w-45 space-y-0.5">
         {videoId && (
           <div className="hidden sm:block">
             <PlaylistPopover videoId={videoId} />
