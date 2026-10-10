@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CustomVideoPlayer } from "../components/VideoPlayer"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
@@ -421,12 +421,26 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
   const dropDownRef = useRef<HTMLDivElement | null>(null)
   const editInputRef = useRef<HTMLInputElement | null>(null)
 
-  const { updateComment, deleteComment, postComment } = useCommentApi()
-  const { data: replies, isLoading: isRepliesLoading } = useQuery({
+  const { updateComment, deleteComment, postComment, isPostingComment } =
+    useCommentApi()
+  const REPLIES_PAGE_SIZE = 10
+  const {
+    data: repliesPages,
+    isLoading: isRepliesLoading,
+    isFetchingNextPage: isFetchingMoreReplies,
+    hasNextPage: hasMoreReplies,
+    fetchNextPage: fetchMoreReplies,
+    isError: isRepliesError,
+  } = useInfiniteQuery({
     queryKey: ["replies", comment.commentId],
-    queryFn: () => getRepliesOfComment(comment.commentId, 1, 10),
+    queryFn: ({ pageParam = 1 }) =>
+      getRepliesOfComment(comment.commentId, pageParam, REPLIES_PAGE_SIZE),
     enabled: showReplies,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === REPLIES_PAGE_SIZE ? allPages.length + 1 : undefined,
   })
+  const replies = repliesPages?.pages.flat() ?? []
 
   useEffect(() => {
     if (editMode) {
@@ -512,7 +526,13 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
           setReplyInput("")
           setReplyError(null)
           setReplyMode(false)
+          // Keep the list open so the newly posted reply is visible,
+          // even when replyCount was 0 (first reply). The ["replies"]
+          // invalidation in useCommentApi refetches the list.
           setShowReplies(true)
+        },
+        onError: () => {
+          setReplyError("Failed to post reply. Please try again.")
         },
       }
     )
@@ -520,10 +540,14 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
 
   function handleShowReplies() {
     setShowReplies((prev) => !prev)
-    setReplyMode(false)
   }
 
-  const hasReplies = comment.replyCount > 0
+  // The server replyCount is stale until ["comments"] refetches, so fall back
+  // to the fetched replies length. This keeps the toggle + list visible for
+  // the first reply (replyCount === 0) right after posting.
+  const fetchedRepliesCount = replies.length
+  const displayReplyCount = Math.max(comment.replyCount, fetchedRepliesCount)
+  const hasReplies = displayReplyCount > 0 || showReplies
 
   return (
     <motion.div
@@ -691,10 +715,14 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
                       <Button
                         type="submit"
                         size="sm"
-                        disabled={!replyInput.trim()}
+                        disabled={!replyInput.trim() || isPostingComment}
                         className="rounded-full h-8 px-4 text-xs font-semibold gap-1"
                       >
-                        <Check className="h-3.5 w-3.5" />
+                        {isPostingComment ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5" />
+                        )}
                         Reply
                       </Button>
                     </div>
@@ -714,13 +742,13 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
                   ) : (
                     <ChevronDown className="h-3.5 w-3.5" />
                   )}
-                  {comment.replyCount}{" "}
-                  {comment.replyCount === 1 ? "reply" : "replies"}
+                  {displayReplyCount}{" "}
+                  {displayReplyCount === 1 ? "reply" : "replies"}
                 </Button>
               )}
 
               <AnimatePresence initial={false}>
-                {showReplies && hasReplies && !isRepliesLoading && (
+                {showReplies && (
                   <motion.div
                     key="replies-list"
                     initial={{ opacity: 0, height: 0 }}
@@ -729,9 +757,42 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
                     transition={{ duration: 0.15 }}
                     className="mt-2 pl-4 border-l-2 border-border/60 space-y-2 overflow-hidden"
                   >
-                    {replies?.map((reply) => (
-                      <CommentItem key={reply.commentId} comment={reply} />
-                    ))}
+                    {isRepliesLoading ? (
+                      <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Loading replies...
+                      </div>
+                    ) : isRepliesError ? (
+                      <p className="text-xs text-destructive font-medium py-2">
+                        Failed to load replies.
+                      </p>
+                    ) : replies.length === 0 ? (
+                      <p className="text-xs text-muted-foreground py-2">
+                        No replies yet.
+                      </p>
+                    ) : (
+                      <>
+                        {replies.map((reply) => (
+                          <CommentItem key={reply.commentId} comment={reply} />
+                        ))}
+                        {hasMoreReplies && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full h-8 px-3 gap-1.5 text-xs font-semibold"
+                            disabled={isFetchingMoreReplies}
+                            onClick={() => fetchMoreReplies()}
+                          >
+                            {isFetchingMoreReplies ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            )}
+                            Show more replies
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

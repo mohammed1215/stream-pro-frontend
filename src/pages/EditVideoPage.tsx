@@ -89,7 +89,16 @@ export const StudioEditVideoPage = () => {
     staleTime: 1000 * 60 * 10,
   })
 
-  const MAX_TAGS = 15
+  const MAX_TAGS = 10
+
+  const normalizeTagList = (
+    list: Array<string | { name?: string }> | undefined
+  ): string[] => {
+    if (!list) return []
+    return list
+      .map((t) => (typeof t === "string" ? t : t?.name))
+      .filter((name): name is string => Boolean(name))
+  }
 
   const handleAddTag = () => {
     const value = tagInput.trim()
@@ -124,8 +133,7 @@ export const StudioEditVideoPage = () => {
     (title !== video.title ||
       description !== (video.description || "") ||
       categoryId !== (video.categoryId || "") ||
-      JSON.stringify(tags) !==
-        JSON.stringify(video.tags?.map((t) => t.name) || []) ||
+      JSON.stringify(tags) !== JSON.stringify(normalizeTagList(video.tags)) ||
       (!video.isPublished &&
         publishTime !==
           (video.publishTime ? toDatetimeLocalValue(video.publishTime) : "")))
@@ -135,7 +143,7 @@ export const StudioEditVideoPage = () => {
       setTitle(video.title || "")
       setDescription(video.description || "")
       setCategoryId(video.categoryId || "")
-      setTags(video.tags?.map((t) => t.name) || [])
+      setTags(normalizeTagList(video.tags))
       setPublishTime(
         video.publishTime ? toDatetimeLocalValue(video.publishTime) : ""
       )
@@ -941,7 +949,7 @@ export const StudioEditVideoPage = () => {
                 setTitle(video.title || "")
                 setDescription(video.description || "")
                 setCategoryId(video.categoryId || "")
-                setTags(video.tags?.map((t) => t.name) || [])
+                setTags(normalizeTagList(video.tags))
               }}
               disabled={!hasChanges || detailsMutation.isPending}
               className="rounded-xl px-4 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"

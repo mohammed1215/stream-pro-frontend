@@ -14,22 +14,39 @@ export const NameInput = ({
   containerClassName,
   className,
   name,
+  id,
+  disabled,
+  value,
+  onChange,
   ...props
 }: NameInputProps) => {
+  const inputId = id ?? name
   return (
     <div className="w-full space-y-2">
-      <label htmlFor={name} className="text-sm font-medium text-gray-700">
+      <label
+        htmlFor={inputId}
+        className="text-sm font-medium text-gray-700"
+      >
         Name
       </label>
       <InputGroup
-        className={cn("overflow-hidden rounded-lg py-6", containerClassName)}
-        {...props}
+        className={cn(
+          "overflow-hidden rounded-lg py-6",
+          disabled && "opacity-60",
+          containerClassName
+        )}
       >
         <InputGroupInput
+          id={inputId}
           type="text"
           placeholder="Username"
           className={cn("min-w-0 flex-1", className)}
           name={name}
+          disabled={disabled}
+          value={value}
+          onChange={onChange}
+          aria-invalid={!!message}
+          {...props}
         />
         <InputGroupAddon>
           <User />

@@ -6,6 +6,7 @@ import { isAxiosError } from "axios"
 import { SubmitButton } from "../../../components/SubmitButton"
 import { PasswordInput } from "../../../components/PasswordInput"
 import { EmailInput } from "../../../components/EmailInput"
+import { NameInput } from "../../../components/NameInput"
 import { signUpUser } from "../../../lib/auth"
 import { useAuth } from "../hooks/useAuth"
 
@@ -95,6 +96,7 @@ export const SignUpPage = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (signUpMutation.isPending) return
     if (!validate()) return
 
     signUpMutation.mutate({
@@ -104,20 +106,31 @@ export const SignUpPage = () => {
     })
   }
 
+  const isPending = signUpMutation.isPending
+
   return (
-    <div className="flex h-screen w-full items-center justify-center animate-page px-3 bg-slate-50/50 dark:bg-background">
-      <div className="flex w-full max-w-sm flex-col gap-6 shadow-xl rounded-2xl border border-border bg-background p-8">
-        <div className="flex justify-center items-center mx-auto bg-sky-50 dark:bg-sky-950 rounded-full size-24 mb-2">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-gradient-to-br from-background via-muted/40 to-background px-3 py-8 animate-page">
+      {/* decorative background blobs */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 -left-24 size-72 rounded-full bg-primary/10 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-24 -right-24 size-72 rounded-full bg-primary/10 blur-3xl"
+      />
+      <div className="relative flex w-full max-w-md flex-col gap-5 rounded-2xl border border-border bg-card/80 p-8 shadow-xl backdrop-blur">
+        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20">
           <img
             src="/logo_light_removed.png"
-            className="mx-auto block size-16"
-            alt="Logo"
+            className="block size-14 object-contain"
+            alt="StreamPro logo"
           />
         </div>
 
-        <div className="space-y-2 text-center">
+        <div className="space-y-1.5 text-center">
           <h1 className="text-2xl font-bold tracking-tight">
-            Create an Account
+            Create an account
           </h1>
           <p className="text-sm text-muted-foreground">
             Sign up to Creator Studio to continue.
@@ -125,61 +138,55 @@ export const SignUpPage = () => {
         </div>
 
         <form
-          className="flex flex-col gap-5 mt-2"
+          className="mt-1 flex flex-col gap-4"
           onSubmit={handleSubmit}
           noValidate
+          aria-busy={isPending}
         >
-          <div className="w-full space-y-2">
-            <label htmlFor="name" className="text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
-              id="name"
+          <fieldset disabled={isPending} className="flex flex-col gap-4">
+            <NameInput
               name="name"
-              type="text"
-              autoComplete="name"
-              placeholder="Full name"
               value={formData.name}
               onChange={handleChange}
-              aria-invalid={!!errors.name}
-              className="w-full rounded-lg border border-input bg-transparent px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+              message={errors.name}
+              autoComplete="name"
             />
-            {errors.name ? (
-              <p className="text-sm text-destructive">{errors.name}</p>
-            ) : null}
-          </div>
 
-          <EmailInput
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            message={errors.email}
-          />
-          <PasswordInput
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            message={errors.password}
-          />
+            <EmailInput
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              message={errors.email}
+            />
+            <PasswordInput
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              message={errors.password}
+              autoComplete="new-password"
+            />
+          </fieldset>
 
           {serverError ? (
-            <p className="text-sm text-destructive text-center">
+            <p
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-sm text-destructive"
+            >
               {serverError}
             </p>
           ) : null}
 
-          <div className="pt-2">
-            <SubmitButton disabled={signUpMutation.isPending}>
-              {signUpMutation.isPending
-                ? "Creating account..."
-                : "Create Account"}
-            </SubmitButton>
-          </div>
+          <SubmitButton isLoading={isPending}>
+            {isPending ? "Creating account..." : "Create Account"}
+          </SubmitButton>
         </form>
 
         <p className="text-sm text-muted-foreground text-center">
           Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link
+            to="/login"
+            className="font-medium text-primary hover:underline"
+          >
             Sign in
           </Link>
         </p>

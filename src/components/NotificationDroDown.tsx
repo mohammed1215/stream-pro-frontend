@@ -9,6 +9,7 @@ import {
   ListMusic,
   Loader2,
   MessageSquare,
+  MessageSquareReply,
   Users,
 } from "lucide-react"
 
@@ -43,6 +44,12 @@ function getNotificationMeta(type: NotificationType) {
         Icon: MessageSquare,
         className: "border-sky-500/20 bg-sky-500/10 text-sky-500",
         label: "Comment",
+      }
+    case "REPLY":
+      return {
+        Icon: MessageSquareReply,
+        className: "border-amber-500/20 bg-amber-500/10 text-amber-500",
+        label: "Reply",
       }
     case "PLAYLIST":
       return {
@@ -174,7 +181,6 @@ export const NotificationDropDown = ({
     if (!notification.isRead) {
       markAsRead(notification.notificationId)
     }
-    markAsRead(notification.notificationId)
   }
 
   return (

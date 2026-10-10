@@ -1,7 +1,12 @@
 import type { PaginatedType } from "../types/paginatedType"
 import axiosInstance from "./api"
 
-export type NotificationType = "LIKE" | "COMMENT" | "PLAYLIST" | "SUBSCRIPTION"
+export type NotificationType =
+  | "LIKE"
+  | "COMMENT"
+  | "REPLY"
+  | "PLAYLIST"
+  | "SUBSCRIPTION"
 
 export interface NotificationResponse {
   notificationId: string

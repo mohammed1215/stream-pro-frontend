@@ -19,21 +19,35 @@ export function EmailInput({
   containerClassName,
   className,
   name,
+  id,
+  disabled,
   ...props
 }: EmailInputProps) {
+  const inputId = id ?? name
   return (
     <div className="w-full space-y-2">
-      <label htmlFor={name} className="text-sm font-medium text-gray-700">
+      <label
+        htmlFor={inputId}
+        className="text-sm font-medium text-gray-700"
+      >
         Email
       </label>
       <InputGroup
-        className={cn("overflow-hidden rounded-lg  py-6", containerClassName)}
+        className={cn(
+          "overflow-hidden rounded-lg  py-6",
+          disabled && "opacity-60",
+          containerClassName
+        )}
       >
         <InputGroupInput
+          id={inputId}
           type="email"
           name={name}
           placeholder="Email"
+          autoComplete="email"
           className={cn("min-w-0 flex-1 ", className)}
+          disabled={disabled}
+          aria-invalid={!!message}
           {...props}
         />
 

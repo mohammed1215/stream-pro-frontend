@@ -7,24 +7,37 @@ import {
 
 export const useCommentApi = () => {
   const queryClient = useQueryClient()
-  const { mutate: postComment } = useMutation({
+  const {
+    mutate: postComment,
+    isPending: isPostingComment,
+    error: postCommentError,
+  } = useMutation({
     mutationFn: postCommentOnVideo,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["comments"] })
+      // Refresh the replies list of the parent comment (if this was a reply).
+      // Invalidating the ["replies"] prefix refetches every open replies query,
+      // including ["replies", parentId, ...] infinite queries.
+      if (variables?.parentId) {
+        queryClient.invalidateQueries({ queryKey: ["replies", variables.parentId] })
+      }
+      queryClient.invalidateQueries({ queryKey: ["replies"] })
     },
   })
   const { mutate: updateComment } = useMutation({
     mutationFn: updateCommentApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments"] })
+      queryClient.invalidateQueries({ queryKey: ["replies"] })
     },
   })
   const { mutate: deleteComment } = useMutation({
     mutationFn: deleteCommentApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments"] })
+      queryClient.invalidateQueries({ queryKey: ["replies"] })
     },
   })
 
-  return { postComment, updateComment, deleteComment }
+  return { postComment, isPostingComment, postCommentError, updateComment, deleteComment }
 }

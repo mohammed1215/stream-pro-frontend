@@ -77,7 +77,8 @@ export const getRepliesOfComment = async (
   pageSize: number = 10
 ) => {
   const res = await axiosInstance.get<CommentResponse[]>(
-    `/api/v1/comments/${commentId}/replies`
+    `/api/v1/comments/${commentId}/replies`,
+    { params: { page: pageNumber, limit: pageSize } }
   )
   return res.data
 }
