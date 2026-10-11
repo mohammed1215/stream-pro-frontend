@@ -12,11 +12,14 @@ export interface NotificationResponse {
   notificationId: string
   actorId: string
   recipientId: string
-  contextId: string
   message: string
   type: NotificationType
   isRead: boolean
   createdAt: string
+  videoId?: string
+  playlistId?: string
+  channelId?: string
+  commentId?: string
 }
 
 export interface PaginedTypeNotification

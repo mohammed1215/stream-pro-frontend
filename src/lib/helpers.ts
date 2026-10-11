@@ -1,3 +1,4 @@
+import type { NotificationResponse } from "./notifications"
 import type { GroupedWatchHistory } from "./watchHistory"
 
 export const formatDurationInMilli = (duration: number): string => {
@@ -86,4 +87,23 @@ export function mergeGroupedHistory(
   }
 
   return mergedGroups
+}
+
+export function getRouteForNotification(
+  notification: NotificationResponse
+): string | null {
+  switch (notification.type) {
+    case "PLAYLIST":
+      return `/playlists/${notification.playlistId}`
+    case "REPLY":
+      return `/videos/${notification.videoId}?commentId=${notification.commentId}`
+    case "SUBSCRIPTION":
+      return `/users/${notification.channelId}`
+    case "COMMENT":
+      return `/videos/${notification.videoId}?commentId=${notification.commentId}`
+    case "LIKE":
+      return `/likes/${notification.videoId}`
+    default:
+      return null
+  }
 }

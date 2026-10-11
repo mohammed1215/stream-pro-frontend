@@ -26,6 +26,8 @@ import {
   markNotificationAsRead,
 } from "../lib/notifications"
 import { useAuth } from "../features/Auth/hooks/useAuth"
+import { useNavigate } from "react-router-dom"
+import { getRouteForNotification } from "../lib/helpers"
 
 type NotificationDropDownProps = {
   onClose?: () => void
@@ -142,6 +144,8 @@ export const NotificationDropDown = ({
   const pageSize = 5
   const [pageNumber, setPageNumber] = useState(1)
 
+  const navigate = useNavigate()
+
   const { data: notifications, isPending } = useQuery({
     queryKey: ["notifications", user?.id, pageNumber],
     queryFn: () => fetchNotifications(pageNumber, pageSize),
@@ -180,6 +184,11 @@ export const NotificationDropDown = ({
   const handleNotificationClick = (notification: NotificationResponse) => {
     if (!notification.isRead) {
       markAsRead(notification.notificationId)
+    }
+
+    const route = getRouteForNotification(notification)
+    if (route) {
+      navigate(route)
     }
   }
 
