@@ -22,6 +22,7 @@ import { useCreateVideoModal } from "../hooks/useCreateVideo"
 import { CreateVideoModal } from "./CreateVideoModal"
 import { CreatePlaylistModal } from "./CreatePlaylistModal"
 import { ThemeSwitcher } from "./ThemeSwitcher"
+import { LogoutButton } from "./LogoutButton"
 
 interface StudioNavItemConfig {
   name: string
@@ -132,7 +133,11 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
       </div>
 
       {/* Storage Footer Widget */}
-      <div className="shrink-0 border-t border-border/80 p-4">
+      <div className="shrink-0 space-y-2 border-t border-border/80 p-4">
+        <LogoutButton
+          variant="full"
+          className="w-full justify-start rounded-xl px-3.5 py-2.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+        />
         <div className="rounded-2xl border border-border bg-secondary/60 p-3.5">
           <div className="flex items-center justify-between text-xs font-semibold text-foreground">
             <span className="flex items-center gap-1.5">

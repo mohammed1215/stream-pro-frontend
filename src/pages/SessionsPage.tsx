@@ -1,22 +1,42 @@
 import { motion, AnimatePresence } from "framer-motion"
-import { MobileIcon } from "@vidstack/react/icons"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import axiosInstance from "../lib/api"
 import { useLogout } from "../hooks/useLogout"
+import { getDeviceId } from "../lib/helpers"
 import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime"
+import {
+  Globe,
+  MapPin,
+  Monitor,
+  ShieldCheck,
+  Smartphone,
+} from "lucide-react"
+
+dayjs.extend(relativeTime)
 
 export interface Session {
   id: string
-  tokenHash: string
-  userId: string
-  deviceId: string
-  deviceType: string
-  deviceToken: string
+  deviceId: string | null
+  deviceType: string | null
+  deviceToken: string | null
+  deviceName: string | null
+  userAgent: string | null
+  city: string | null
+  country: string | null
+  createdIp: string | null
+  lastIp: string | null
+  appVersion: string | null
+  loginMethod: string | null
   isRevoked: boolean
+  revokedAt: string | null
+  revokedReason: string | null
+  replacedByHash: string | null
+  lastUsedAt: string | null
   expiresAt: string
   createdAt: string
   updatedAt: string
-  lastUsedAt: string
+  userId: string
 }
 
 export interface SessionsResponse {
@@ -42,14 +62,88 @@ const itemVariants = {
   },
 }
 
+function DeviceIcon({ deviceType }: { deviceType: string | null }) {
+  const cls = "w-5 h-5"
+  switch (deviceType) {
+    case "ANDROID":
+    case "IOS":
+      return <Smartphone className={cls} />
+    case "WEB":
+      return <Monitor className={cls} />
+    default:
+      return <Globe className={cls} />
+  }
+}
+
+function isExpired(session: Session) {
+  return new Date(session.expiresAt).getTime() <= Date.now()
+}
+
+function SessionStatusBadge({ session }: { session: Session }) {
+  if (session.isRevoked) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground ring-1 ring-border">
+        Revoked
+      </span>
+    )
+  }
+  if (isExpired(session)) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground ring-1 ring-border">
+        Expired
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent-bg)] text-accent-foreground ring-1 ring-[var(--accent-border)]">
+      Active now
+    </span>
+  )
+}
+
+function formatLocation(session: Session) {
+  const parts = [session.city, session.country].filter(Boolean)
+  return parts.length > 0 ? parts.join(", ") : null
+}
+
+function SessionMeta({ session }: { session: Session }) {
+  const location = formatLocation(session)
+  const ip = session.lastIp ?? session.createdIp
+  const lastActive = session.lastUsedAt ?? session.updatedAt
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+      {location && (
+        <span className="inline-flex items-center gap-1">
+          <MapPin className="w-3.5 h-3.5" />
+          {location}
+        </span>
+      )}
+      {ip && <span className="font-mono">{ip}</span>}
+      {session.appVersion && <span>v{session.appVersion}</span>}
+      {session.loginMethod && (
+        <span className="inline-flex items-center gap-1 capitalize">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          {session.loginMethod.toLowerCase()}
+        </span>
+      )}
+      <span>Active {dayjs(lastActive).fromNow()}</span>
+    </div>
+  )
+}
+
 export const SessionsPage = () => {
+  const queryClient = useQueryClient()
   const {
     logoutAllOtherDevicesMutation,
     logoutSingleDeviceMutation,
     revokeSessionMutation,
   } = useLogout()
 
-  const { data: sessions, isLoading } = useQuery({
+  const {
+    data: sessions,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["sessions"],
     queryFn: async () => {
       const response = await axiosInstance.get<SessionsResponse>(
@@ -59,129 +153,155 @@ export const SessionsPage = () => {
     },
   })
 
-  const currentDeviceId =
-    typeof window !== "undefined" ? localStorage.getItem("deviceId") : null
+  const refreshSessions = () =>
+    queryClient.invalidateQueries({ queryKey: ["sessions"] })
+
+  const currentDeviceId = getDeviceId()
 
   const currentSession =
     sessions?.find((s) => s.deviceId === currentDeviceId) || sessions?.[0]
   const otherSessions = sessions?.filter((s) => s.id !== currentSession?.id)
+
+  const mutationBusy =
+    logoutSingleDeviceMutation?.isPending ||
+    logoutAllOtherDevicesMutation.isPending ||
+    revokeSessionMutation.isPending
 
   return (
     <motion.section
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="max-w-2xl mx-auto p-6 space-y-8"
+      className="max-w-2xl mx-auto p-6 space-y-8 text-foreground"
     >
       {/* 🏷️ Header */}
       <motion.div variants={itemVariants} className="space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">
           Sessions
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           These are the devices currently signed in to your account. If you
-          don't recognize one, sign it out.
+          don&apos;t recognize one, sign it out.
         </p>
       </motion.div>
 
       {/* ⏳ Loading State */}
       {isLoading ? (
         <div className="space-y-6 animate-pulse">
-          <div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-800 rounded" />
-          <div className="h-20 bg-zinc-100 dark:bg-zinc-800/60 rounded-xl" />
-          <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded" />
-          <div className="h-36 bg-zinc-100 dark:bg-zinc-800/60 rounded-xl" />
+          <div className="h-4 w-24 bg-muted rounded" />
+          <div className="h-20 bg-muted/60 rounded-xl" />
+          <div className="h-4 w-32 bg-muted rounded" />
+          <div className="h-36 bg-muted/60 rounded-xl" />
         </div>
+      ) : isError ? (
+        <p className="p-6 text-center text-sm text-destructive">
+          Couldn&apos;t load sessions. Please try again.
+        </p>
       ) : (
         <>
           {/* 🟢 Current Device */}
           {currentSession && (
             <motion.div variants={itemVariants} className="space-y-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 This device
               </span>
-              <div className="flex items-center justify-between p-4 rounded-xl border border-emerald-500/20 bg-emerald-50/40 dark:bg-emerald-950/10">
-                <div className="flex items-center gap-3.5">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-semibold capitalize text-zinc-900 dark:text-zinc-100">
-                      {currentSession.deviceType || "Current Browser"}
-                    </h3>
-                    {currentSession.lastUsedAt && (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {dayjs(
-                          currentSession.lastUsedAt ?? currentSession.updatedAt
-                        ).fromNow()}
+              <div className="p-4 rounded-xl border border-[var(--accent-border)] bg-[var(--accent-bg)]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {currentSession.deviceName ??
+                          currentSession.deviceType ??
+                          "Current Browser"}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Signed in{" "}
+                        {dayjs(currentSession.createdAt).format("MMM D, YYYY")}
                       </p>
-                    )}
+                    </div>
                   </div>
+                  <SessionStatusBadge session={currentSession} />
                 </div>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
-                  Active now
-                </span>
+                <SessionMeta session={currentSession} />
               </div>
             </motion.div>
           )}
 
           {/* 📱 Other Devices */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Other signed-in devices ({otherSessions?.length})
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Other signed-in devices ({otherSessions?.length ?? 0})
             </span>
 
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden divide-y divide-zinc-200 dark:divide-zinc-800">
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border">
               <AnimatePresence initial={false} mode="popLayout">
-                {otherSessions?.map((session) => (
-                  <motion.div
-                    key={session.id}
-                    layout
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{
-                      opacity: 0,
-                      x: -30,
-                      height: 0,
-                      transition: { duration: 0.25 },
-                    }}
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    className="flex items-center justify-between p-4 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
-                        <MobileIcon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium capitalize text-zinc-900 dark:text-zinc-100">
-                          {session.deviceType || "Unknown Device"}
-                        </h3>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {dayjs(
-                            session.lastUsedAt ?? session.updatedAt
-                          ).fromNow()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={
-                        logoutSingleDeviceMutation?.isPending ||
-                        logoutAllOtherDevicesMutation.isPending ||
-                        revokeSessionMutation.isPending
-                      }
-                      onClick={() => revokeSessionMutation.mutate(session.id)}
-                      className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 px-3 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                {otherSessions?.map((session) => {
+                  const inactive = session.isRevoked || isExpired(session)
+                  return (
+                    <motion.div
+                      key={session.id}
+                      layout
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{
+                        opacity: 0,
+                        x: -30,
+                        height: 0,
+                        transition: { duration: 0.25 },
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 35,
+                      }}
+                      className="p-4 hover:bg-muted/60 transition-colors"
                     >
-                      Sign out
-                    </button>
-                  </motion.div>
-                ))}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3.5">
+                          <div className="p-2.5 rounded-lg bg-muted text-muted-foreground">
+                            <DeviceIcon deviceType={session.deviceType} />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-foreground">
+                              {session.deviceName ??
+                                session.deviceType ??
+                                "Unknown Device"}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              Signed in{" "}
+                              {dayjs(session.createdAt).format("MMM D, YYYY")}
+                            </p>
+                          </div>
+                        </div>
+
+                        {inactive ? (
+                          <SessionStatusBadge session={session} />
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={mutationBusy}
+                            onClick={() =>
+                              revokeSessionMutation.mutate(session.id, {
+                                onSuccess: refreshSessions,
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-destructive px-3 py-1.5 rounded-lg hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Sign out
+                          </button>
+                        )}
+                      </div>
+                      <SessionMeta session={session} />
+                    </motion.div>
+                  )
+                })}
               </AnimatePresence>
               {otherSessions?.length === 0 && (
-                <p className="p-6 text-center text-sm text-zinc-400">
+                <p className="p-6 text-center text-sm text-muted-foreground">
                   No other active sessions.
                 </p>
               )}
@@ -191,18 +311,17 @@ export const SessionsPage = () => {
           {/* 🚪 Sign Out All */}
           <motion.div
             variants={itemVariants}
-            className="pt-2 border-t border-zinc-100 dark:border-zinc-800"
+            className="pt-2 border-t border-border"
           >
             <button
               type="button"
-              disabled={
-                logoutAllOtherDevicesMutation.isPending ||
-                otherSessions?.length === 0 ||
-                logoutSingleDeviceMutation?.isPending ||
-                revokeSessionMutation.isPending
+              disabled={mutationBusy || otherSessions?.length === 0}
+              onClick={() =>
+                logoutAllOtherDevicesMutation.mutate(undefined, {
+                  onSuccess: refreshSessions,
+                })
               }
-              onClick={() => logoutAllOtherDevicesMutation.mutate()}
-              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-medium text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {logoutAllOtherDevicesMutation.isPending ? (
                 <>

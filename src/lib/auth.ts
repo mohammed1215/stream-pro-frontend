@@ -1,4 +1,4 @@
-import axiosInstance from "./api"
+import axiosInstance, { rawApi } from "./api"
 
 // Login related types and function
 type DeviceType = "ANDROID" | "IOS" | "WEB"
@@ -8,6 +8,8 @@ export interface LoginPayload {
   deviceId?: string
   deviceToken?: string
   deviceType?: DeviceType
+  deviceName?: string
+  appVersion?: string
 }
 
 export interface LoginResponse {
@@ -35,6 +37,11 @@ export interface SignUpPayload {
   email: string
   password: string
   name: string
+  deviceId?: string
+  deviceToken?: string
+  deviceType?: DeviceType
+  deviceName?: string
+  appVersion?: string
 }
 export interface SignUpResponse {
   success: true
@@ -58,17 +65,22 @@ export const signUpUser = async (
 }
 
 export const refreshToken = async (): Promise<{ accessToken: string }> => {
-  return (
-    await axiosInstance.post<{ accessToken: string }>("/api/v1/auth/refresh")
-  ).data
+  // Raw client: never toast, never retry, never fire session-expired.
+  const { data } = await rawApi.post("/api/v1/auth/refresh")
+  const accessToken =
+    (data as { accessToken?: string })?.accessToken ??
+    (data as { data?: { accessToken?: string } })?.data?.accessToken
+  return { accessToken: accessToken as string }
 }
 
 export const logoutUser = async (): Promise<void> => {
-  await axiosInstance.post("/api/v1/auth/logout")
+  // Raw client: a failing logout (e.g. already-expired session) must stay
+  // silent — the caller logs out locally regardless.
+  await rawApi.post("/api/v1/auth/logout")
 }
 
 export const logoutAllOtherDevices = async (): Promise<void> => {
-  await axiosInstance.post("/api/v1/auth/logout-all")
+  await rawApi.post("/api/v1/auth/logout-all")
 }
 
 export const revokeSession = async (sessionId: string): Promise<void> => {

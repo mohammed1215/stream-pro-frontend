@@ -18,6 +18,7 @@ import { Header } from "../../../components/Header"
 import { PlaylistIcon } from "@vidstack/react/icons"
 import { CreatePlaylistModal } from "../../../components/CreatePlaylistModal"
 import { CreateVideoModal } from "../../../components/CreateVideoModal"
+import { LogoutButton } from "../../../components/LogoutButton"
 
 interface NavItemData {
   name: string
@@ -147,9 +148,11 @@ const NavItem = ({
 const SidebarNav = ({
   isClosed,
   onNavigate,
+  showLabels = true,
 }: {
   isClosed: boolean
   onNavigate?: () => void
+  showLabels?: boolean
 }) => (
   <div className="space-y-6">
     {NAV_SECTIONS.map((section, idx) => (
@@ -185,6 +188,17 @@ const SidebarNav = ({
         )}
       </div>
     ))}
+
+    <div className="space-y-1">
+      <hr className="my-4 border-border/60" />
+      <div className={isClosed ? "flex justify-center" : ""} title={isClosed ? "Log out" : undefined}>
+        {isClosed || !showLabels ? (
+          <LogoutButton variant="icon" />
+        ) : (
+          <LogoutButton variant="sidebar" />
+        )}
+      </div>
+    </div>
   </div>
 )
 

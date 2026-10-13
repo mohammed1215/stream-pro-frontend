@@ -9,6 +9,9 @@ import { EmailInput } from "../../../components/EmailInput"
 import { NameInput } from "../../../components/NameInput"
 import { signUpUser } from "../../../lib/auth"
 import { useAuth } from "../hooks/useAuth"
+import { getFcmToken } from "../../../config/firebase"
+import { getDeviceId } from "../../../lib/helpers"
+import { getAppVersion, getDeviceName } from "../../../lib/device"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PASSWORD_LENGTH = 8
@@ -94,15 +97,33 @@ export const SignUpPage = () => {
     return !nextErrors.name && !nextErrors.email && !nextErrors.password
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (signUpMutation.isPending) return
     if (!validate()) return
+
+    // request notification permission and get FCM token (non-blocking)
+    let fcmToken: string | null = null
+    if ("Notification" in window) {
+      try {
+        const permission = await Notification.requestPermission()
+        if (permission === "granted") {
+          fcmToken = await getFcmToken()
+        }
+      } catch {
+        // notifications are optional — continue without a token
+      }
+    }
 
     signUpMutation.mutate({
       name: formData.name.trim(),
       email: formData.email,
       password: formData.password,
+      deviceType: "WEB",
+      deviceId: getDeviceId(),
+      deviceToken: fcmToken ?? undefined,
+      deviceName: getDeviceName(),
+      appVersion: getAppVersion(),
     })
   }
 

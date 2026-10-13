@@ -1,16 +1,16 @@
-import { Bell, Menu, Plus, Search, Moon, Sun, ArrowLeft } from "lucide-react"
+import { Bell, Menu, Plus, Search, ArrowLeft } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "../features/Auth/hooks/useAuth"
 import { Button } from "./ui/button"
 import { router } from "../router"
 import { useState } from "react"
 import { NotificationDropDown } from "./NotificationDroDown"
-import { useTheme } from "../hooks/useTheme"
 import { useCreateVideoModal } from "../hooks/useCreateVideo"
 import { usePlaylistModal } from "../hooks/usePlaylistModal"
 import { Content, Portal, Root, Trigger } from "@radix-ui/react-popover"
 import { SearchWithSuggestions } from "./SearchWithSuggestions"
 import { ThemeSwitcher } from "./ThemeSwitcher"
+import { LogoutButton } from "./LogoutButton"
 
 const CreateModals = () => {
   const { open: openCreateVideoModal } = useCreateVideoModal()
@@ -83,7 +83,6 @@ export const Header = ({
   const [searchTerm, setSearchTerm] = useState("")
   const [openNotifications, setOpenNotifications] = useState(false)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
-  const { theme, toggleTheme } = useTheme()
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
@@ -226,6 +225,9 @@ export const Header = ({
             </div>
           )}
         </motion.button>
+
+        {/* Log out */}
+        <LogoutButton variant="icon" />
       </section>
     </header>
   )

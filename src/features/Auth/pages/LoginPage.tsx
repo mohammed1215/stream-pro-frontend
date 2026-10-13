@@ -14,6 +14,7 @@ import { AxiosError } from "axios"
 import { useAuth } from "../hooks/useAuth"
 import { getFcmToken } from "../../../config/firebase"
 import { getDeviceId } from "../../../lib/helpers"
+import { getAppVersion, getDeviceName } from "../../../lib/device"
 
 const LoginForm = () => {
   const login = useAuth((state) => state.login)
@@ -94,6 +95,8 @@ const LoginForm = () => {
       deviceType: "WEB",
       deviceId: getDeviceId(),
       deviceToken: fcmToken ?? undefined,
+      deviceName: getDeviceName(),
+      appVersion: getAppVersion(),
     })
   }
 
