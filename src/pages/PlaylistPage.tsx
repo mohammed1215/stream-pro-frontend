@@ -1,8 +1,7 @@
 import { useSearchParams } from "react-router-dom"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { useAuth } from "../features/Auth/hooks/useAuth"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import dayjs from "../lib/dayjs"
 import {
   Clock,
   Play,
@@ -17,8 +16,6 @@ import { useNavigate } from "react-router-dom"
 import { getPlaylistDetails, type PlaylistItemDto } from "../lib/playlists"
 
 // Initialize dayjs relative time plugin
-dayjs.extend(relativeTime)
-
 // --- Sub Components ---
 
 const VideoCard = ({

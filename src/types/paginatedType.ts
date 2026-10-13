@@ -3,5 +3,6 @@ export interface PaginatedType<T> {
   pageSize: number
   pageNumber: number
   totalPages: number
+  totalCount?: number
   hasNextPage: boolean
 }

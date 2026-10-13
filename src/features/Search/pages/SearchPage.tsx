@@ -21,8 +21,7 @@ import type { SearchResponse, VideoResponse } from "../../../lib/search"
 import { Button } from "../../../components/ui/button"
 import { cn } from "../../../lib/utils"
 import { formatDurationInSeconds, formatNumber } from "../../../lib/helpers"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import dayjs from "../../../lib/dayjs"
 import { useAuth } from "../../Auth/hooks/useAuth"
 
 import { toast } from "react-toastify"
@@ -31,8 +30,6 @@ import { createPortal } from "react-dom"
 import { CreatePlaylistModal } from "../../../components/CreatePlaylistModal"
 import { SaveDropdown } from "../../../components/features/SaveDropdown"
 import axiosInstance from "../../../lib/api"
-
-dayjs.extend(relativeTime)
 
 const PAGE_SIZE = 12
 

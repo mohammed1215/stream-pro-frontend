@@ -1,12 +1,9 @@
 import { Link } from "react-router-dom"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import dayjs from "../lib/dayjs"
 import { motion, type Variants } from "framer-motion"
 import { Play } from "lucide-react"
 import { formatDurationInSeconds, formatNumber } from "../lib/helpers"
 import { VideoActionMenu } from "./VideoActionMenu"
-
-dayjs.extend(relativeTime)
 
 export type VideoCardVideo = {
   id?: string
@@ -32,7 +29,7 @@ type VideoCardProps = {
   onDelete?: (videoId: string) => void
 }
 
-export const cardItemVariants: Variants = {
+const cardItemVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,

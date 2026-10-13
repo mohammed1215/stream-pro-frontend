@@ -1,15 +1,10 @@
 import axiosInstance from "./api"
 
 export const checkUserSubscribedToChannel = async (channelId: string) => {
-  try {
-    const check = await axiosInstance.get<boolean>(
-      `/api/v1/subscriptions/${channelId}`
-    )
-    return check
-  } catch (error) {
-    console.log(error)
-    throw error
-  }
+  const check = await axiosInstance.get<boolean>(
+    `/api/v1/subscriptions/${channelId}`
+  )
+  return check
 }
 
 interface SubscribeToChannelResponse {
@@ -22,36 +17,26 @@ export const subscribeToChannel = async (
   channelId: string,
   signal?: AbortSignal
 ) => {
-  try {
-    const data = (
-      await axiosInstance.post<SubscribeToChannelResponse>(
-        `/api/v1/subscriptions/${channelId}`,
-        { signal }
-      )
-    ).data
-    return data
-  } catch (error) {
-    console.log(error)
-    throw error
-  }
+  const data = (
+    await axiosInstance.post<SubscribeToChannelResponse>(
+      `/api/v1/subscriptions/${channelId}`,
+      { signal }
+    )
+  ).data
+  return data
 }
 
 export const unsubscribeToChannel = async (
   channelId: string,
   signal?: AbortSignal
 ) => {
-  try {
-    const data = (
-      await axiosInstance.delete<{ message: string }>(
-        `/api/v1/subscriptions/${channelId}`,
-        { signal }
-      )
-    ).data
-    return data
-  } catch (error) {
-    console.log(error)
-    throw error
-  }
+  const data = (
+    await axiosInstance.delete<{ message: string }>(
+      `/api/v1/subscriptions/${channelId}`,
+      { signal }
+    )
+  ).data
+  return data
 }
 
 export interface PaginatedUserSubscriptions {

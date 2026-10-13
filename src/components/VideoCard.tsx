@@ -1,11 +1,8 @@
 import { ImageOff } from "lucide-react"
 import type { VideoResponse } from "../lib/search"
 import { formatDurationInSeconds } from "../lib/helpers"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import dayjs from "../lib/dayjs"
 import { ChannelAvatar } from "./ChannelAvatar"
-
-dayjs.extend(relativeTime)
 
 export const VideoCard = ({ video }: { video: VideoResponse }) => {
   const dayObj = dayjs(video.updatedAt)

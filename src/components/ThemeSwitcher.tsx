@@ -3,7 +3,7 @@ import { useState } from "react"
 import { Sun, Moon, Waves, Sunset, type LucideIcon } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import * as Popover from "@radix-ui/react-popover"
-import { useTheme, THEMES, type Theme } from "../hooks/useTheme"
+import { useTheme, type Theme } from "../hooks/useTheme"
 
 interface ThemeOption {
   value: Theme

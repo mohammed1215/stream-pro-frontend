@@ -1,4 +1,5 @@
 import axiosInstance from "./api"
+import type { PaginatedType } from "../types/paginatedType"
 
 export interface Playlist {
   playlistId: string
@@ -13,13 +14,8 @@ export interface Playlist {
 }
 
 export const getPlaylists = async (): Promise<Playlist[]> => {
-  try {
-    const response = await axiosInstance.get<Playlist[]>(`/api/v1/playlists`)
-    return response.data
-  } catch (error) {
-    console.error("Error fetching playlists:", error)
-    throw error
-  }
+  const response = await axiosInstance.get<Playlist[]>(`/api/v1/playlists`)
+  return response.data
 }
 
 export const createPlaylist = async (playlistData: {
@@ -31,17 +27,12 @@ export const createPlaylist = async (playlistData: {
   playlistId: number
   playlistTitle: string
 }> => {
-  try {
-    const response = await axiosInstance.post<{
-      message: string
-      playlistId: number
-      playlistTitle: string
-    }>(`/api/v1/playlists`, playlistData)
-    return response.data
-  } catch (error) {
-    console.error("Error creating playlist:", error)
-    throw error
-  }
+  const response = await axiosInstance.post<{
+    message: string
+    playlistId: number
+    playlistTitle: string
+  }>(`/api/v1/playlists`, playlistData)
+  return response.data
 }
 
 export const addVideoToPlaylist = async ({
@@ -51,16 +42,11 @@ export const addVideoToPlaylist = async ({
   playlistId: string
   videoId: string
 }) => {
-  try {
-    const response = await axiosInstance.post(
-      `/api/v1/playlists/${playlistId}/videos/${videoId}`,
-      { videoId }
-    )
-    return response.data
-  } catch (error) {
-    console.error("Error adding video to playlist:", error)
-    throw error
-  }
+  const response = await axiosInstance.post(
+    `/api/v1/playlists/${playlistId}/videos/${videoId}`,
+    { videoId }
+  )
+  return response.data
 }
 
 export const removeVideoFromPlaylist = async ({
@@ -70,15 +56,10 @@ export const removeVideoFromPlaylist = async ({
   playlistId: string
   videoId: string
 }) => {
-  try {
-    const response = await axiosInstance.delete(
-      `/api/v1/playlists/${playlistId}/videos/${videoId}`
-    )
-    return response.data
-  } catch (error) {
-    console.error("Error removing video from playlist:", error)
-    throw error
-  }
+  const response = await axiosInstance.delete(
+    `/api/v1/playlists/${playlistId}/videos/${videoId}`
+  )
+  return response.data
 }
 
 export interface VideoOfPlaylist {
@@ -91,41 +72,26 @@ export interface VideoOfPlaylist {
   createdAt: string
 }
 
-export interface PaginatedType2<T> {
-  items: T[]
+export interface PaginatedType2<T> extends PaginatedType<T> {
   totalCount: number
-  pageNumber: number
-  pageSize: number
-  totalPages: number
-  hasNextPage: boolean
 }
 
 export const getVideosInPlaylist = async (playlistId: string) => {
-  try {
-    const response = await axiosInstance.get<
-      PaginatedType2<VideoOfPlaylist & { duration: number }> & {
-        isPublic: boolean
-      }
-    >(`/api/v1/playlists/${playlistId}/videos`)
-    return response.data
-  } catch (error) {
-    console.error("Error fetching videos in playlist:", error)
-    throw error
-  }
+  const response = await axiosInstance.get<
+    PaginatedType2<VideoOfPlaylist & { duration: number }> & {
+      isPublic: boolean
+    }
+  >(`/api/v1/playlists/${playlistId}/videos`)
+  return response.data
 }
 
 export const getPlaylistsWithHasVideo = async (
   videoId: string
 ): Promise<(Playlist & { hasVideo: boolean })[]> => {
-  try {
-    const response = await axiosInstance.get<
-      (Playlist & { hasVideo: boolean })[]
-    >(`/api/v1/playlists/video/${videoId}`)
-    return response.data
-  } catch (error) {
-    console.error("Error fetching playlists with video:", error)
-    throw error
-  }
+  const response = await axiosInstance.get<
+    (Playlist & { hasVideo: boolean })[]
+  >(`/api/v1/playlists/video/${videoId}`)
+  return response.data
 }
 
 export interface PlaylistItemDto {
@@ -153,16 +119,11 @@ export const getPlaylistDetails = async (
   playlistId: string,
   params: { cursor?: string; limit?: number }
 ) => {
-  try {
-    const response = await axiosInstance.get<PlaylistDetailsDto>(
-      `/api/v1/playlists/${playlistId}`,
-      { params }
-    )
-    return response.data
-  } catch (error) {
-    console.error("Error fetching playlist details:", error)
-    throw error
-  }
+  const response = await axiosInstance.get<PlaylistDetailsDto>(
+    `/api/v1/playlists/${playlistId}`,
+    { params }
+  )
+  return response.data
 }
 
 export type VideoPlaylistOwner = { id: string; thumbnailUrl: string | null }

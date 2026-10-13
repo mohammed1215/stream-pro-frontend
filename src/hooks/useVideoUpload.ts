@@ -8,6 +8,15 @@ import {
   uploadVideoToCloudApi,
 } from "../lib/video"
 
+interface CloudinaryUploadResponse {
+  public_id: string
+  version: number
+  signature: string
+  duration?: number
+  bytes?: number
+  secure_url?: string
+}
+
 export type UploadStep =
   | "idle"
   | "initiating"
@@ -99,7 +108,7 @@ export const useVideoUpload = () => {
       setVideoProgress(100)
 
       // Upload Thumbnail File (if selected)
-      let cloudThumbRes: any = null
+      let cloudThumbRes: CloudinaryUploadResponse | null = null
       if (thumbnailFile && signatureThumbnailData) {
         setUploadStep("uploading-thumbnail")
         const cloudThumbnailFormData = new FormData()
@@ -134,7 +143,7 @@ export const useVideoUpload = () => {
 
       // Step 4: Finalize on your server
       setUploadStep("finalizing")
-      const confirmationRequests: Promise<any>[] = [
+      const confirmationRequests: Promise<unknown>[] = [
         confirmUploadVideoApi(videoId, {
           publicId: cloudRes.public_id,
           version: cloudRes.version,

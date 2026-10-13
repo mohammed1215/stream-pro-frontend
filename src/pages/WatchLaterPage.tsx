@@ -1,8 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { getWatchLater, type WatchLaterItem } from "../lib/watchlater"
 import { useAuth } from "../features/Auth/hooks/useAuth"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import dayjs from "../lib/dayjs"
 import {
   Clock,
   Play,
@@ -16,8 +15,6 @@ import { formatDurationInSeconds, formatNumber } from "../lib/helpers"
 import { useNavigate } from "react-router-dom"
 
 // Initialize dayjs relative time plugin
-dayjs.extend(relativeTime)
-
 // --- Sub Components ---
 
 const VideoCard = ({

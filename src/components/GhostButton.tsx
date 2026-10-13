@@ -1,13 +1,12 @@
+import type { ComponentProps } from "react"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
 
-export const GhostButton = ({
-  className,
-  ...props
-}: {
+type GhostButtonProps = ComponentProps<typeof Button> & {
   className?: string
-  [key: string]: any
-}) => {
+}
+
+export const GhostButton = ({ className, ...props }: GhostButtonProps) => {
   return (
     <Button
       type="button"

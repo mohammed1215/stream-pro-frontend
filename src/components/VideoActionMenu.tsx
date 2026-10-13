@@ -417,13 +417,9 @@ export const CreatePlaylistModal2 = ({
     error,
   } = useMutation({
     mutationFn: createPlaylist,
-    onSuccess: (data) => {
-      console.log("Playlist created successfully:", data)
-    },
   })
 
   const handleClose = () => {
-    console.log("closing")
     onClose()
   }
   const handleSubmit = () => {

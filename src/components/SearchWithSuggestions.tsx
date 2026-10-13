@@ -5,6 +5,7 @@ import { Search } from "lucide-react"
 import { useDebounce } from "../hooks/useDebounce"
 import { router } from "../router"
 import axiosInstance from "../lib/api"
+import { safeDecode } from "../lib/helpers"
 import { SearchForm } from "./SearchForm"
 
 interface VideoSuggestion {
@@ -95,21 +96,27 @@ export const SearchWithSuggestions = ({
         >
           {trendingList.length > 0 && (
             <div className="py-1">
-              {trendingList.map((term) => (
-                <button
-                  key={term.term}
-                  type="button"
-                  onMouseDown={(e) => {
-                    // منع فقدان الـ Focus قبل تنفيذ الضغط
-                    e.preventDefault()
-                    goTo(`/search?q=${encodeURIComponent(term.term)}`)
-                  }}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-muted text-left"
-                >
-                  <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  <span className="truncate">{term.term}</span>
-                </button>
-              ))}
+              {trendingList.map((term) => {
+                // Historic rows may be stored percent-encoded — decode for
+                // display AND for navigation, otherwise clicking re-logs the
+                // encoded string and the pollution never stops.
+                const label = safeDecode(term.term)
+                return (
+                  <button
+                    key={term.term}
+                    type="button"
+                    onMouseDown={(e) => {
+                      // منع فقدان الـ Focus قبل تنفيذ الضغط
+                      e.preventDefault()
+                      goTo(`/search?q=${encodeURIComponent(label)}`)
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-muted text-left"
+                  >
+                    <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{label}</span>
+                  </button>
+                )
+              })}
             </div>
           )}
 

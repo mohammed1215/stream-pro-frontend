@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { getPlaylists, type Playlist } from "../lib/playlists"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import dayjs from "../lib/dayjs"
 import {
   Play,
   Globe,
@@ -16,8 +15,6 @@ import {
 import { CreatePlaylistModal } from "../components/CreatePlaylistModal"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-
-dayjs.extend(relativeTime)
 
 // --- Sub Components ---
 const PlaylistCard = ({ playlist }: { playlist: Playlist }) => {

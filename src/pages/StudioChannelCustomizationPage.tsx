@@ -19,6 +19,7 @@ import {
   updateChannelAvatar,
   updateChannelBanner,
   updateChannelDetails,
+  type FetchChannelDataResponse,
 } from "../lib/channel"
 
 // ============================================================
@@ -49,12 +50,16 @@ export const StudioChannelCustomizationPage = () => {
     queryFn: ({ signal }) => fetchOwnerChannelData(signal),
   })
 
-  useEffect(() => {
-    if (channel) {
-      setTitle(channel.title || "")
-      setDescription(channel.description || "")
-    }
-  }, [channel])
+  // Initialize the form from the fetched channel. Done during render (not
+  // in an effect) per the React docs pattern for adjusting state when props
+  // change. Keyed on the query object identity, same as the previous effect.
+  const [lastChannel, setLastChannel] =
+    useState<FetchChannelDataResponse | null>(null)
+  if (channel && channel !== lastChannel) {
+    setLastChannel(channel)
+    setTitle(channel.title || "")
+    setDescription(channel.description || "")
+  }
 
   useEffect(() => {
     return () => {
@@ -128,8 +133,9 @@ export const StudioChannelCustomizationPage = () => {
       queryClient.invalidateQueries({ queryKey: ["owner-channel"] })
       showToast("Banner updated successfully", "success")
     },
-    onError: (err: any) => {
-      if (axios.isCancel(err) || err?.name === "CanceledError") return
+    onError: (err: unknown) => {
+      if (axios.isCancel(err)) return
+      if (err instanceof Error && err.name === "CanceledError") return
       showToast("Failed to upload banner. Please try again.", "error")
     },
     onSettled: () => {

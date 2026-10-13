@@ -205,8 +205,6 @@ export const CustomVideoPlayer = ({
 
   const differenceInTimeToSend =
     duration < 60 ? Math.trunc(duration * 0.4) : Math.trunc(duration * 0.1)
-  console.log(duration)
-  console.log(differenceInTimeToSend, "differenceInTimeToSend")
 
   useEffect(() => {
     if (

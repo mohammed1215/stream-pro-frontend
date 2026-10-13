@@ -1,8 +1,9 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios"
 import { toastCustom } from "./helper"
+import { env } from "./env"
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: env.apiBaseUrl,
   withCredentials: true,
 })
 
@@ -10,7 +11,7 @@ const axiosInstance = axios.create({
 // (refresh / logout). This prevents retry loops, duplicate error toasts
 // and spurious "session expired" events when those calls fail.
 export const rawApi = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: env.apiBaseUrl,
   withCredentials: true,
 })
 

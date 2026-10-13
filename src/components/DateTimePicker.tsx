@@ -8,7 +8,8 @@ import {
   ChevronRight,
   X,
 } from "lucide-react"
-import dayjs, { Dayjs } from "dayjs"
+import dayjs from "../lib/dayjs"
+import type { Dayjs } from "dayjs"
 
 interface DateTimePickerProps {
   value: string

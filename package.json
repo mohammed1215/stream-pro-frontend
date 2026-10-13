@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.21",
     "firebase": "^12.17.1",
+    "framer-motion": "^13.1.1",
     "lucide-react": "^1.30.0",
     "media-icons": "^1.1.5",
     "motion": "^13.1.1",

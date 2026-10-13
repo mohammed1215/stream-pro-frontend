@@ -17,7 +17,7 @@ import { Button } from "../components/ui/button"
 import { router } from "../router"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import axiosInstance from "../lib/api"
-import dayjs from "dayjs"
+import dayjs from "../lib/dayjs"
 import { formatNumber } from "../lib/helpers"
 import { useEffect, useState } from "react"
 import { editProfile } from "../lib/auth"
@@ -131,7 +131,7 @@ export const ProfilePage = () => {
             totalViews: number
             videoCount: number
           }
-          meta: {}
+          meta: Record<string, unknown>
         }>("/api/v1/profile/me")
       ).data
       return data.data
@@ -139,6 +139,7 @@ export const ProfilePage = () => {
   })
 
   const login = useAuth((state) => state.login)
+  const storedToken = useAuth((state) => state.token)
 
   const [updateFormData, setUpdateFormData] = useState<{
     name: string
@@ -153,23 +154,14 @@ export const ProfilePage = () => {
     onSuccess: (data) => {
       setEditMode(false)
       setProgress(0)
-      const localStorageUserData = {
+      const userData = {
         id: data.data.id,
         email: data.data.email,
         name: data.data.name,
         avatarUrl: data.data.avatarUrl,
       }
 
-      login(
-        {
-          id: data.data.id,
-          email: data.data.email,
-          name: data.data.name,
-          avatarUrl: data.data.avatarUrl,
-        },
-        localStorage.getItem("stream_token") || ""
-      )
-      localStorage.setItem("stream_user", JSON.stringify(localStorageUserData))
+      login(userData, storedToken || "")
     },
   })
 

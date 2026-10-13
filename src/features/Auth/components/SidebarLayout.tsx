@@ -208,9 +208,13 @@ export const SidebarLayout = () => {
   const location = useLocation()
   const currentOutlet = useOutlet()
 
-  useEffect(() => {
+  // Close the mobile drawer on navigation. Done during render (not in an
+  // effect) per the React docs pattern for adjusting state when props change.
+  const [lastPath, setLastPath] = useState(location.pathname)
+  if (location.pathname !== lastPath) {
+    setLastPath(location.pathname)
     setIsMobileOpen(false)
-  }, [location.pathname])
+  }
 
   useEffect(() => {
     document.body.style.overflow = isMobileOpen ? "hidden" : ""

@@ -11,7 +11,6 @@ export const useVideo = () => {
   const { mutate: deleteVideo } = useMutation({
     mutationFn: deleteVideoApi,
     onSuccess: () => {
-      console.log("Video deleted successfully")
       queryClient.invalidateQueries({ queryKey: ["videos"] })
     },
   })
@@ -19,7 +18,6 @@ export const useVideo = () => {
   const { mutateAsync: createVideo } = useMutation({
     mutationFn: createVideoApi,
     onSuccess: () => {
-      console.log("Video created successfully")
       queryClient.invalidateQueries({ queryKey: ["videos"] })
     },
   })

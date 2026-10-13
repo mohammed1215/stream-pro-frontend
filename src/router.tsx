@@ -1,32 +1,43 @@
+import { Suspense, type ReactNode } from "react"
 import { createBrowserRouter } from "react-router-dom"
 import App from "./App"
 import { LoginPage } from "./features/Auth/pages/LoginPage"
 import { SignUpPage } from "./features/Auth/pages/SignUpPage"
 import { HomePage } from "./features/Auth/pages/HomePage"
 import { SidebarLayout } from "./features/Auth/components/SidebarLayout"
-import { SearchPage } from "./features/Search/pages/SearchPage"
-import { VideoPage } from "./features/Video/pages/VideoPage"
-import { ChannelDetailsPage } from "./pages/ChannelDetailsPage"
 import { StudioLayout } from "./components/StudioLayout"
-import { StudioDashboardPage } from "./pages/StudioDashboardPage"
-import { StudioContentPage } from "./pages/StudioContentPage"
-import { StudioEditVideoPage } from "./pages/EditVideoPage"
-import { HistoryPage } from "./pages/HistoryPage"
-import { WatchLaterPage } from "./pages/WatchLaterPage"
-import { PlaylistsPage } from "./pages/PlaylistsPage"
-import { PlaylistPage } from "./pages/PlaylistPage"
-import { LikedVideosPage } from "./pages/LikedVideosPage"
-import { SubscriptionsPage } from "./pages/SubscriptionsPage"
-import { SessionsPage } from "./pages/SessionsPage"
-import { ProfilePage } from "./pages/ProfilePage"
-import { StudioChannelCustomizationPage } from "./pages/StudioChannelCustomizationPage"
-import { StudioCommentsPage } from "./pages/StudioCommentsPage"
-import { StudioSubscribersPage } from "./pages/StudioSubscribersPage"
+import { ProtectedRoute } from "./components/ProtectedRoute"
+import { NotFoundPage } from "./pages/NotFoundPage"
+import { PageFallback } from "./components/PageFallback"
+import {
+  ChannelDetailsPage,
+  HistoryPage,
+  LikedVideosPage,
+  PlaylistPage,
+  PlaylistsPage,
+  ProfilePage,
+  SearchPage,
+  SessionsPage,
+  StudioChannelCustomizationPage,
+  StudioCommentsPage,
+  StudioContentPage,
+  StudioDashboardPage,
+  StudioEditVideoPage,
+  StudioSubscribersPage,
+  SubscriptionsPage,
+  VideoPage,
+  WatchLaterPage,
+} from "./lazyPages"
+
+const withSuspense = (node: ReactNode) => (
+  <Suspense fallback={<PageFallback />}>{node}</Suspense>
+)
 
 export const router = createBrowserRouter([
   {
-    path: "*",
+    path: "/",
     element: <App />,
+    errorElement: <NotFoundPage />,
     children: [
       {
         path: "login",
@@ -48,50 +59,82 @@ export const router = createBrowserRouter([
         element: <SidebarLayout />,
         children: [
           { index: true, element: <HomePage /> },
-          { path: "search", element: <SearchPage /> },
-
+          { path: "search", element: withSuspense(<SearchPage />) },
+          { path: "videos/:videoId", element: withSuspense(<VideoPage />) },
           {
-            path: "feed/subscriptions",
-            element: <SubscriptionsPage />,
+            path: "channels/:channelId",
+            element: withSuspense(<ChannelDetailsPage />),
           },
-          { path: "feed/liked", element: <LikedVideosPage /> },
-          { path: "feed/watchlater", element: <WatchLaterPage /> },
-          { path: "feed/playlists", element: <PlaylistsPage /> },
-          { path: "feed/history", element: <HistoryPage /> },
-
           {
-            path: "playlist",
-            element: <PlaylistPage />,
+            element: <ProtectedRoute />,
+            children: [
+              {
+                path: "feed/subscriptions",
+                element: withSuspense(<SubscriptionsPage />),
+              },
+              {
+                path: "feed/liked",
+                element: withSuspense(<LikedVideosPage />),
+              },
+              {
+                path: "feed/watchlater",
+                element: withSuspense(<WatchLaterPage />),
+              },
+              {
+                path: "feed/playlists",
+                element: withSuspense(<PlaylistsPage />),
+              },
+              {
+                path: "feed/history",
+                element: withSuspense(<HistoryPage />),
+              },
+              { path: "playlist", element: withSuspense(<PlaylistPage />) },
+              { path: "notifications", element: <div>All Notifications</div> },
+              { path: "sessions", element: withSuspense(<SessionsPage />) },
+              { path: "profile", element: withSuspense(<ProfilePage />) },
+              { path: "settings", element: <div>Settings Page</div> },
+            ],
           },
-
-          { path: "notifications", element: <div>All Notifications</div> },
-
-          { path: "videos/:videoId", element: <VideoPage /> },
-          { path: "channels/:channelId", element: <ChannelDetailsPage /> },
-          { path: "sessions", element: <SessionsPage /> },
-          { path: "profile", element: <ProfilePage /> },
-          { path: "settings", element: <div>Settings Page</div> },
         ],
       },
       {
         path: "studio",
-        element: <StudioLayout />,
+        element: <ProtectedRoute />,
         children: [
-          { index: true, element: <StudioDashboardPage /> },
-          { path: "content", element: <StudioContentPage /> },
-          { path: "content/:videoId/edit", element: <StudioEditVideoPage /> },
-          { path: "content/subscribers", element: <StudioSubscribersPage /> },
-          { path: "upload", element: <div>Upload Video Flow</div> },
-
-          { path: "analytics", element: <div>Analytics</div> },
-          { path: "comments", element: <StudioCommentsPage /> },
-
           {
-            path: "channel/customization",
-            element: <StudioChannelCustomizationPage />,
+            element: <StudioLayout />,
+            children: [
+              {
+                index: true,
+                element: withSuspense(<StudioDashboardPage />),
+              },
+              {
+                path: "content",
+                element: withSuspense(<StudioContentPage />),
+              },
+              {
+                path: "content/:videoId/edit",
+                element: withSuspense(<StudioEditVideoPage />),
+              },
+              {
+                path: "content/subscribers",
+                element: withSuspense(<StudioSubscribersPage />),
+              },
+              { path: "upload", element: <div>Upload Video Flow</div> },
+              { path: "analytics", element: <div>Analytics</div> },
+              {
+                path: "comments",
+                element: withSuspense(<StudioCommentsPage />),
+              },
+              {
+                path: "channel/customization",
+                element: withSuspense(<StudioChannelCustomizationPage />),
+              },
+            ],
           },
         ],
       },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ])

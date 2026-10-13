@@ -1,11 +1,7 @@
 import { ImageOff, Music2 } from "lucide-react"
 import type { VideoResponse } from "../lib/search"
 import { formatDurationInSeconds } from "../lib/helpers"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
-
-dayjs.extend(relativeTime)
-
+import dayjs from "../lib/dayjs"
 export const VideoSearchCard = ({
   video,
   hoverColoring,

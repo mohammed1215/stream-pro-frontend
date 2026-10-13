@@ -3,8 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import axiosInstance from "../lib/api"
 import { useLogout } from "../hooks/useLogout"
 import { getDeviceId } from "../lib/helpers"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import dayjs from "../lib/dayjs"
 import {
   Globe,
   MapPin,
@@ -12,8 +11,6 @@ import {
   ShieldCheck,
   Smartphone,
 } from "lucide-react"
-
-dayjs.extend(relativeTime)
 
 export interface Session {
   id: string

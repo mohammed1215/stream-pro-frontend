@@ -25,29 +25,19 @@ export interface VideoDetailResponse {
   publishTime: string | null
 }
 export const videoDetails = async (videoId: string) => {
-  try {
-    const video = (
-      await axiosInstance.get<VideoDetailResponse>(`/api/v1/videos/${videoId}`)
-    ).data
-    return video
-  } catch (error) {
-    console.log(error)
-    throw error
-  }
+  const video = (
+    await axiosInstance.get<VideoDetailResponse>(`/api/v1/videos/${videoId}`)
+  ).data
+  return video
 }
 
 export const ownerVideoDetails = async (videoId: string) => {
-  try {
-    const video = (
-      await axiosInstance.get<VideoDetailResponse>(
-        `/api/v1/owner/videos/${videoId}`
-      )
-    ).data
-    return video
-  } catch (error) {
-    console.log(error)
-    throw error
-  }
+  const video = (
+    await axiosInstance.get<VideoDetailResponse>(
+      `/api/v1/owner/videos/${videoId}`
+    )
+  ).data
+  return video
 }
 
 export const createVideoApi = async ({
@@ -70,7 +60,6 @@ export const createVideoApi = async ({
     },
     {
       onUploadProgress: (progressEvent) => {
-        console.log("Upload progress:", progressEvent.progress)
         if (typeof progressEvent.progress === "number") {
           onUploadProgress?.(Math.round(progressEvent.progress * 100))
         }
@@ -131,19 +120,22 @@ export const initiateVideoUploadApi = async (payload: {
   return res.data
 }
 
-export const uploadVideoToCloudApi = async ({
-  uploadUrl,
-  formData,
-  onProgress,
-  signal,
-}: {
+interface CloudUploadArgs {
   uploadUrl: string
   formData: FormData
   onProgress?: (percent: number) => void
   signal?: AbortSignal
-}) => {
+}
+
+export const uploadToCloudApi = async ({
+  uploadUrl,
+  formData,
+  onProgress,
+  signal,
+}: CloudUploadArgs) => {
   const res = await axios.post(uploadUrl, formData, {
     signal,
+    timeout: 10 * 60 * 1000,
     onUploadProgress: (progressEvent) => {
       if (progressEvent.total) {
         const percent = Math.round(
@@ -155,30 +147,10 @@ export const uploadVideoToCloudApi = async ({
   })
   return res.data
 }
-export const uploadThumbnailToCloudApi = async ({
-  uploadUrl,
-  formData,
-  onProgress,
-  signal,
-}: {
-  uploadUrl: string
-  formData: FormData
-  onProgress?: (percent: number) => void
-  signal?: AbortSignal
-}) => {
-  const res = await axios.post(uploadUrl, formData, {
-    signal,
-    onUploadProgress: (progressEvent) => {
-      if (progressEvent.total) {
-        const percent = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
-        )
-        onProgress?.(percent)
-      }
-    },
-  })
-  return res.data
-}
+
+// Backward-compatible aliases. Prefer `uploadToCloudApi` in new code.
+export const uploadVideoToCloudApi = uploadToCloudApi
+export const uploadThumbnailToCloudApi = uploadToCloudApi
 
 export const confirmUploadThumbnailApi = async (
   videoId: string,
@@ -219,23 +191,13 @@ export const deleteVideo = async (videoId: string) => {
 }
 
 export const likeVideo = async (videoId: string) => {
-  try {
-    const res = await axiosInstance.post(`/api/v1/likes/${videoId}`)
-    return res.data
-  } catch (error) {
-    console.log(error)
-    throw error
-  }
+  const res = await axiosInstance.post(`/api/v1/likes/${videoId}`)
+  return res.data
 }
 
 export const unLikeVideo = async (videoId: string) => {
-  try {
-    const res = await axiosInstance.delete(`/api/v1/likes/${videoId}`)
-    return res.data
-  } catch (error) {
-    console.log(error)
-    throw error
-  }
+  const res = await axiosInstance.delete(`/api/v1/likes/${videoId}`)
+  return res.data
 }
 
 export interface FetchOwnerVideosChannelResponse {
@@ -271,24 +233,19 @@ export const fetchOwnerVideosChannel = async ({
   status?: "ALL" | "PUBLISHED" | "UNPUBLISHED"
   sortBy?: "NEWEST" | "OLDEST" | "MOST_VIEWED"
 }) => {
-  try {
-    const res = await axiosInstance.get<FetchOwnerVideosChannelResponse>(
-      `/api/v1/owner/videos`,
-      {
-        params: {
-          page,
-          limit,
-          ...(query && { query }),
-          ...(status !== "ALL" && { status }),
-          ...(sortBy && { sortBy }),
-        },
-      }
-    )
-    return res.data
-  } catch (error) {
-    console.log(error)
-    throw error
-  }
+  const res = await axiosInstance.get<FetchOwnerVideosChannelResponse>(
+    `/api/v1/owner/videos`,
+    {
+      params: {
+        page,
+        limit,
+        ...(query && { query }),
+        ...(status !== "ALL" && { status }),
+        ...(sortBy && { sortBy }),
+      },
+    }
+  )
+  return res.data
 }
 
 export const updateVideoStatus = async (videoId: string) => {
