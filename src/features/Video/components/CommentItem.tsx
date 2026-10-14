@@ -12,14 +12,12 @@ import {
 } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
-import {
-  getRepliesOfComment,
-  type CommentResponse,
-} from "../../../lib/comment"
+import { getRepliesOfComment, type CommentResponse } from "../../../lib/comment"
 import { useCommentApi } from "../../../hooks/useComment"
 import dayjs from "../../../lib/dayjs"
 import { cn } from "../../../lib/utils"
 import { commentItemVariants } from "./videoPageVariants"
+import { useAuth } from "../../Auth/hooks/useAuth"
 
 export const UserAvatar = ({
   user,
@@ -39,6 +37,8 @@ export const UserAvatar = ({
   )
 
 export function CommentItem({ comment }: { comment: CommentResponse }) {
+  const user = useAuth((state) => state.user)
+
   const [commentSettings, setCommentSettings] = useState(false)
   const [commentInput, setCommentInput] = useState(comment.content)
   const [error, setError] = useState<string | null>(null)
@@ -449,7 +449,7 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
       )}
 
       <AnimatePresence>
-        {commentSettings && (
+        {commentSettings && comment.userId === user?.id && (
           <motion.div
             ref={dropDownRef}
             initial={{ opacity: 0, scale: 0.95, y: -5 }}
@@ -463,6 +463,7 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
               size="sm"
               className="w-full justify-start text-xs font-medium rounded-lg h-8"
               onClick={() => {
+                if (comment.userId !== user?.id) return
                 setCommentSettings(false)
                 setReplyMode(false)
                 setEditMode(true)
@@ -475,6 +476,7 @@ export function CommentItem({ comment }: { comment: CommentResponse }) {
               size="sm"
               className="w-full justify-start text-xs font-medium text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg h-8"
               onClick={() => {
+                if (comment.userId !== user?.id) return
                 setCommentSettings(false)
                 deleteComment({ commentId: comment.commentId })
               }}
