@@ -17,19 +17,56 @@ firebase.initializeApp({
 const messaging = firebase.messaging()
 
 messaging.onBackgroundMessage((payload) => {
-  console.log(
-    "[firebase-messaging-sw.js] Received background message ",
-    payload
-  )
-  const notificationTitle = payload.notification.title
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: "/firebase-logo.png",
+  const title = payload.notification?.title || "StreamPro"
+  const data = payload.data || {}
+
+  let url = "/notifications"
+  if (data.url) {
+    url = data.url
+  } else if (data.type === "PLAYLIST" && data.playlistId) {
+    url = `/playlist?list=${data.playlistId}`
+  } else if (
+    (data.type === "COMMENT" || data.type === "REPLY") &&
+    data.videoId
+  ) {
+    url = `/videos/${data.videoId}${
+      data.commentId ? `?commentId=${data.commentId}` : ""
+    }`
+  } else if (data.type === "SUBSCRIPTION" && data.channelId) {
+    url = `/channels/${data.channelId}`
+  } else if (data.type === "LIKE") {
+    url = `/feed/liked`
   }
 
-  new Notification(notification.title, {
-    body: notification.body,
-    icon: notification.icon,
-  })
-  //   self.registration.showNotification(notificationTitle, notificationOptions)
+  const options = {
+    body: payload.notification?.body || "",
+    icon:
+      payload.notification?.icon ||
+      payload.notification?.image ||
+      "/logo_icon.svg",
+    badge: "/favicon.svg",
+    image: payload.notification?.image,
+    tag: data.notificationId || url, // collapses duplicates
+    renotify: true,
+    data: { url: new URL(url, self.location.origin).href },
+  }
+
+  return self.registration.showNotification(title, options)
+})
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || "/notifications"
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          if ("focus" in client && "navigate" in client) {
+            return client.navigate(url).then(() => client.focus())
+          }
+        }
+        return clients.openWindow(url)
+      })
+  )
 })

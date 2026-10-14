@@ -34,11 +34,39 @@ export const getFcmToken = async (): Promise<string | null> => {
   }
 }
 
+function getUrlFromFcmData(data?: Record<string, string>): string | null {
+  if (!data) return null
+  if (data.url) return data.url
+  switch (data.type) {
+    case "PLAYLIST":
+      return data.playlistId ? `/playlist?list=${data.playlistId}` : null
+    case "REPLY":
+    case "COMMENT":
+      return data.videoId
+        ? `/videos/${data.videoId}${data.commentId ? `?commentId=${data.commentId}` : ""}`
+        : null
+    case "SUBSCRIPTION":
+      return data.channelId ? `/channels/${data.channelId}` : null
+    case "LIKE":
+      return "/feed/liked"
+    default:
+      return null
+  }
+}
+
 onMessage(messaging, (payload) => {
-  const notificationTitle = payload.notification?.title || "Notification"
-  const notificationOptions = {
+  const notificationTitle = payload.notification?.title || "StreamPro"
+  const url = getUrlFromFcmData(payload.data) || "/notifications"
+  const notificationOptions: NotificationOptions & { data?: { url: string } } = {
     body: payload.notification?.body || "",
-    icon: payload.notification?.icon || "/firebase-logo.png",
+    icon:
+      payload.notification?.icon ||
+      (payload.notification as { image?: string } | undefined)?.image ||
+      "/logo_icon.svg",
+    badge: "/favicon.svg",
+    tag: payload.data?.notificationId || url,
+    renotify: true,
+    data: { url },
   }
 
   // Show the native browser notification
@@ -46,7 +74,13 @@ onMessage(messaging, (payload) => {
     typeof Notification !== "undefined" &&
     Notification.permission === "granted"
   ) {
-    new Notification(notificationTitle, notificationOptions)
+    const n = new Notification(notificationTitle, notificationOptions)
+    n.onclick = (event) => {
+      event.preventDefault()
+      window.focus()
+      window.location.href = n.data?.url || "/notifications"
+      n.close()
+    }
   }
 
   // Cancel any currently flying requests for notifications, then
